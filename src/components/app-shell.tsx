@@ -1,4 +1,4 @@
-import { BarChart3, Bell, CalendarClock, ClipboardList, Home, Package, Settings, Wrench } from "lucide-react";
+import { BarChart3, Bell, CalendarClock, ClipboardList, FolderCog, Home, Package, Settings, Wrench } from "lucide-react";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions";
 import { GlobalSearch } from "@/components/global-search";
@@ -69,6 +69,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
             {user.role === "ADMIN" ? (
               <>
                 <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">Administration</p>
+                <NavLink href="/admin/categories" icon={<FolderCog className="h-4 w-4" />} label="Categories" />
                 <NavLink href="/admin/utilisateurs" icon={<Settings className="h-4 w-4" />} label="Utilisateurs" />
               </>
             ) : null}

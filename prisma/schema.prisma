@@ -62,6 +62,7 @@ model User {
   comments         RequestComment[]
   histories        StatusHistory[]
   notifications    Notification[]
+  specialties      EquipmentCategory[] @relation("UserSpecialties")
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 }
@@ -80,10 +81,15 @@ model Location {
 }
 
 model EquipmentCategory {
-  id         String      @id @default(cuid())
-  name       String      @unique
-  icon       String?
-  equipments Equipment[]
+  id              String      @id @default(cuid())
+  name            String      @unique
+  icon            String?
+  isExternal      Boolean     @default(false)
+  contractorName  String?
+  contractorPhone String?
+  contractorEmail String?
+  equipments      Equipment[]
+  specialists     User[]      @relation("UserSpecialties")
 }
 
 model Equipment {

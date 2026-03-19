@@ -194,43 +194,87 @@ export async function createRequestAction(formData: FormData) {
 
   const requestNumber = await getNextRequestNumber();
 
+  // ===== AUTO-ASSIGNMENT =====
+  let autoAssignedToId: string | undefined;
+  let isExternal = false;
+  let contractorName: string | null = null;
+
+  if (equipment.categoryId) {
+    const category = await prisma.equipmentCategory.findUnique({
+      where: { id: equipment.categoryId },
+      include: { specialists: { where: { active: true }, take: 1 } },
+    });
+
+    if (category) {
+      isExternal = category.isExternal;
+      contractorName = category.contractorName;
+
+      if (!isExternal && category.specialists.length > 0) {
+        autoAssignedToId = category.specialists[0].id;
+      }
+    }
+  }
+
   const request = await prisma.request.create({
     data: {
       number: requestNumber,
       equipmentId: equipment.id,
       requesterId: user.id,
+      assignedToId: autoAssignedToId,
       locationId: equipment.locationId,
       issueType: parsed.data.issueType as never,
       description: parsed.data.description,
       urgency: parsed.data.urgency as never,
+      status: autoAssignedToId ? RequestStatus.ACKNOWLEDGED : RequestStatus.NEW,
       photos,
       history: {
-        create: {
-          fromStatus: null,
-          toStatus: RequestStatus.NEW,
-          actorId: user.id,
-          comment: "Signalement cree depuis la fiche equipement.",
-        },
+        create: [
+          {
+            fromStatus: null,
+            toStatus: RequestStatus.NEW,
+            actorId: user.id,
+            comment: "Signalement cree depuis la fiche equipement.",
+          },
+          ...(autoAssignedToId
+            ? [{
+                fromStatus: RequestStatus.NEW,
+                toStatus: RequestStatus.ACKNOWLEDGED,
+                actorId: autoAssignedToId,
+                comment: "Affectation automatique au technicien specialise.",
+              }]
+            : []),
+        ],
       },
     },
   });
 
-  const recipients = await prisma.user.findMany({
-    where: {
-      role: {
-        in: [Role.ADMIN, Role.MANAGER, Role.TECHNICIAN],
+  // Notify assigned technician
+  if (autoAssignedToId) {
+    await prisma.notification.create({
+      data: {
+        recipientId: autoAssignedToId,
+        title: "Nouvelle demande assignee automatiquement",
+        message: `${request.number} - ${equipment.name}`,
+        link: `/demandes/${request.id}`,
       },
-      active: true,
-    },
+    });
+  }
+
+  // Notify managers (+ contractor info if external)
+  const managers = await prisma.user.findMany({
+    where: { role: { in: [Role.ADMIN, Role.MANAGER] }, active: true },
     select: { id: true },
   });
 
-  if (recipients.length > 0) {
+  if (managers.length > 0) {
+    const externalNote = isExternal && contractorName
+      ? ` - Prestataire externe : ${contractorName}`
+      : "";
     await prisma.notification.createMany({
-      data: recipients.map((recipient) => ({
-        recipientId: recipient.id,
-        title: "Nouvelle demande d'intervention",
-        message: `${request.number} - ${equipment.name}`,
+      data: managers.map((m) => ({
+        recipientId: m.id,
+        title: isExternal ? "Demande prestataire externe" : "Nouvelle demande d'intervention",
+        message: `${request.number} - ${equipment.name}${externalNote}`,
         link: `/demandes/${request.id}`,
       })),
     });
@@ -443,6 +487,81 @@ export async function addCommentAction(formData: FormData) {
 
   revalidatePath(`/demandes/${requestId}`);
   redirect(withSearchParams(`/demandes/${requestId}`, { success: "Commentaire ajoute." }));
+}
+
+// ===== CATEGORY MANAGEMENT =====
+
+export async function createCategoryAction(formData: FormData) {
+  await requireRole([Role.ADMIN, Role.MANAGER]);
+
+  const name = getString(formData, "name");
+  if (name.length < 2) {
+    redirect(withSearchParams("/admin/categories/new", { error: "Le nom est requis." }));
+  }
+
+  const existing = await prisma.equipmentCategory.findUnique({ where: { name } });
+  if (existing) {
+    redirect(withSearchParams("/admin/categories/new", { error: "Cette categorie existe deja." }));
+  }
+
+  const isExternal = getString(formData, "isExternal") === "true";
+  const specialistIds = formData.getAll("specialistIds").filter((v): v is string => typeof v === "string" && v.length > 0);
+
+  await prisma.equipmentCategory.create({
+    data: {
+      name,
+      icon: getOptionalString(formData, "icon"),
+      isExternal,
+      contractorName: isExternal ? getOptionalString(formData, "contractorName") : undefined,
+      contractorPhone: isExternal ? getOptionalString(formData, "contractorPhone") : undefined,
+      contractorEmail: isExternal ? getOptionalString(formData, "contractorEmail") : undefined,
+      specialists: specialistIds.length > 0 ? { connect: specialistIds.map((id) => ({ id })) } : undefined,
+    },
+  });
+
+  revalidatePath("/admin/categories");
+  redirect(withSearchParams("/admin/categories", { success: "Categorie creee." }));
+}
+
+export async function updateCategoryAction(formData: FormData) {
+  await requireRole([Role.ADMIN, Role.MANAGER]);
+
+  const id = getString(formData, "id");
+  const name = getString(formData, "name");
+  if (name.length < 2) {
+    redirect(withSearchParams(`/admin/categories/${id}/edit`, { error: "Le nom est requis." }));
+  }
+
+  const isExternal = getString(formData, "isExternal") === "true";
+  const specialistIds = formData.getAll("specialistIds").filter((v): v is string => typeof v === "string" && v.length > 0);
+
+  await prisma.equipmentCategory.update({
+    where: { id },
+    data: {
+      name,
+      icon: getOptionalString(formData, "icon"),
+      isExternal,
+      contractorName: isExternal ? getOptionalString(formData, "contractorName") : null,
+      contractorPhone: isExternal ? getOptionalString(formData, "contractorPhone") : null,
+      contractorEmail: isExternal ? getOptionalString(formData, "contractorEmail") : null,
+      specialists: { set: specialistIds.map((id) => ({ id })) },
+    },
+  });
+
+  revalidatePath("/admin/categories");
+  redirect(withSearchParams("/admin/categories", { success: "Categorie modifiee." }));
+}
+
+export async function deleteCategoryAction(formData: FormData) {
+  await requireRole([Role.ADMIN]);
+
+  const id = getString(formData, "id");
+
+  await prisma.equipment.updateMany({ where: { categoryId: id }, data: { categoryId: null } });
+  await prisma.equipmentCategory.delete({ where: { id } });
+
+  revalidatePath("/admin/categories");
+  redirect(withSearchParams("/admin/categories", { success: "Categorie supprimee." }));
 }
 
 // ===== USER MANAGEMENT =====
