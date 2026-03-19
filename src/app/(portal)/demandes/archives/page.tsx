@@ -1,5 +1,5 @@
 import { RequestStatus, Role } from "@prisma/client";
-import { ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
+import { Archive, ChevronLeft, ChevronRight, Search, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
@@ -8,7 +8,7 @@ import { prisma } from "@/lib/db";
 import { requestIssueTypeLabels } from "@/lib/labels";
 import { requireUser } from "@/lib/session";
 import { formatDateTime, formatLocation } from "@/lib/utils";
-import { deleteArchivedRequestAction } from "@/app/actions";
+import { archiveNowAction, deleteArchivedRequestAction } from "@/app/actions";
 
 const PAGE_SIZE = 20;
 
@@ -25,6 +25,7 @@ export default async function ArchivesPage({ searchParams }: ArchivesPageProps) 
 
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
+  const success = typeof params.success === "string" ? params.success : "";
   const page = Math.max(1, parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1);
 
   const where = {
@@ -71,11 +72,21 @@ export default async function ArchivesPage({ searchParams }: ArchivesPageProps) 
         title="Archives"
         description={`${totalCount} demande${totalCount > 1 ? "s" : ""} archivee${totalCount > 1 ? "s" : ""}. Ces demandes ont ete cloturees puis archivees automatiquement.`}
         actions={
-          <Link href="/demandes" className="secondary-button">
-            Retour aux demandes
-          </Link>
+          <div className="flex items-center gap-3">
+            <form action={archiveNowAction}>
+              <button type="submit" className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg">
+                <Archive className="h-4 w-4" />
+                Archiver maintenant
+              </button>
+            </form>
+            <Link href="/demandes" className="secondary-button">
+              Retour aux demandes
+            </Link>
+          </div>
         }
       />
+
+      {success ? <div className="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">{success}</div> : null}
 
       <section className="panel p-5">
         <form className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto]">

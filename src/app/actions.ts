@@ -852,3 +852,30 @@ export async function deleteArchivedRequestAction(formData: FormData) {
   revalidatePath("/demandes/archives");
   redirect("/demandes/archives");
 }
+
+// ===== ARCHIVE NOW (manual) =====
+export async function archiveNowAction() {
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
+
+  // Archive closed requests
+  const archived = await prisma.request.updateMany({
+    where: { status: RequestStatus.CLOSED, ...estFilter },
+    data: { status: RequestStatus.ARCHIVED },
+  });
+
+  // Delete read notifications for all users in this establishment
+  const users = user.establishmentId
+    ? await prisma.user.findMany({ where: { establishmentId: user.establishmentId }, select: { id: true } })
+    : [];
+  const userIds = users.map((u) => u.id);
+
+  const deleted = userIds.length > 0
+    ? await prisma.notification.deleteMany({ where: { read: true, recipientId: { in: userIds } } })
+    : await prisma.notification.deleteMany({ where: { read: true } });
+
+  revalidatePath("/demandes/archives");
+  revalidatePath("/demandes");
+  revalidatePath("/notifications");
+  redirect(`/demandes/archives?success=${archived.count} demande(s) archivee(s), ${deleted.count} notification(s) supprimee(s)`);
+}
