@@ -826,3 +826,29 @@ export async function generateMaintenanceAction() {
   revalidatePath("/demandes");
   redirect(withSearchParams("/maintenance", { success: `${generated} intervention(s) preventive(s) generee(s).` }));
 }
+
+// ===== DELETE ARCHIVED REQUEST =====
+export async function deleteArchivedRequestAction(formData: FormData) {
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const requestId = getString(formData, "requestId");
+
+  const request = await prisma.request.findFirst({
+    where: {
+      id: requestId,
+      status: RequestStatus.ARCHIVED,
+      ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
+    },
+  });
+
+  if (!request) {
+    redirect("/demandes/archives");
+  }
+
+  // Delete related records first
+  await prisma.statusHistory.deleteMany({ where: { requestId } });
+  await prisma.requestComment.deleteMany({ where: { requestId } });
+  await prisma.request.delete({ where: { id: requestId } });
+
+  revalidatePath("/demandes/archives");
+  redirect("/demandes/archives");
+}

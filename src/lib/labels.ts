@@ -44,6 +44,7 @@ export const requestStatusLabels: Record<RequestStatus, string> = {
   DONE: "Terminee",
   CLOSED: "Cloturee",
   REJECTED: "Rejetee",
+  ARCHIVED: "Archivee",
 };
 
 export const equipmentStatusStyles: Record<EquipmentStatus, string> = {
@@ -62,6 +63,7 @@ export const requestStatusStyles: Record<RequestStatus, string> = {
   DONE: "bg-emerald-50 text-emerald-700 border-emerald-200",
   CLOSED: "bg-gray-100 text-gray-600 border-gray-200",
   REJECTED: "bg-red-50 text-red-700 border-red-200",
+  ARCHIVED: "bg-slate-100 text-slate-500 border-slate-200",
 };
 
 export const requestUrgencyStyles: Record<RequestUrgency, string> = {

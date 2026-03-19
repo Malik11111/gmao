@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bell, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Menu, Package, Settings, X } from "lucide-react";
+import { Archive, BarChart3, Bell, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Menu, Package, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -40,6 +40,7 @@ const techLinks: NavLink[] = [
 const managerLinks: NavLink[] = [
   { href: "/maintenance", label: "Maint. preventive", icon: CalendarClock },
   { href: "/maintenance/planning", label: "Planning annuel", icon: Calendar },
+  { href: "/demandes/archives", label: "Archives", icon: Archive },
 ];
 
 const adminLinks: NavLink[] = [

@@ -45,6 +45,7 @@ enum RequestStatus {
   DONE
   CLOSED
   REJECTED
+  ARCHIVED
 }
 
 model Establishment {
