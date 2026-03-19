@@ -44,7 +44,7 @@ export default async function NewUserPage({ searchParams }: NewUserPageProps) {
           </div>
           <div className="space-y-1.5">
             <label className="label" htmlFor="email">Adresse email</label>
-            <input className="field" id="email" name="email" type="email" placeholder="julie.martin@ime.local" required />
+            <input className="field" id="email" name="email" type="email" placeholder="julie.martin@exemple.fr" required />
           </div>
           <div className="space-y-1.5">
             <label className="label" htmlFor="password">Mot de passe</label>

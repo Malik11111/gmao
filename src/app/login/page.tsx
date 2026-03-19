@@ -99,7 +99,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <label className="label" htmlFor="email">
                 Adresse email
               </label>
-              <input className="field" id="email" name="email" type="email" placeholder="prenom.nom@ime.fr" defaultValue={email} />
+              <input className="field" id="email" name="email" type="email" placeholder="prenom.nom@exemple.fr" defaultValue={email} />
             </div>
 
             <div className="space-y-1.5">

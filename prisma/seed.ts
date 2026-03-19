@@ -25,7 +25,7 @@ async function main() {
   const [admin, manager, technician, user] = await Promise.all([
     prisma.user.create({
       data: {
-        email: "admin@ime.local",
+        email: "admin@gmao.fr",
         passwordHash,
         firstName: "Claire",
         lastName: "Bernard",
@@ -36,7 +36,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        email: "responsable@ime.local",
+        email: "responsable@gmao.fr",
         passwordHash,
         firstName: "Marc",
         lastName: "Lefevre",
@@ -47,7 +47,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        email: "tech@ime.local",
+        email: "tech@gmao.fr",
         passwordHash,
         firstName: "Sonia",
         lastName: "Petit",
@@ -58,7 +58,7 @@ async function main() {
     }),
     prisma.user.create({
       data: {
-        email: "personnel@ime.local",
+        email: "personnel@gmao.fr",
         passwordHash,
         firstName: "Julie",
         lastName: "Martin",
@@ -280,10 +280,10 @@ async function main() {
 
   console.log({
     demoAccounts: [
-      "admin@ime.local / demo1234",
-      "responsable@ime.local / demo1234",
-      "tech@ime.local / demo1234",
-      "personnel@ime.local / demo1234",
+      "admin@gmao.fr / demo1234",
+      "responsable@gmao.fr / demo1234",
+      "tech@gmao.fr / demo1234",
+      "personnel@gmao.fr / demo1234",
     ],
   });
 }
