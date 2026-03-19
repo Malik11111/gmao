@@ -11,6 +11,7 @@ export async function GET() {
   }
 
   const equipments = await prisma.equipment.findMany({
+    where: user.establishmentId ? { establishmentId: user.establishmentId } : {},
     include: { category: true, location: true, _count: { select: { requests: true } } },
     orderBy: { createdAt: "desc" },
   });

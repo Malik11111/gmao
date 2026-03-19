@@ -10,12 +10,12 @@ type NewPlanPageProps = {
 };
 
 export default async function NewMaintenancePlanPage({ searchParams }: NewPlanPageProps) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
 
   const equipments = await prisma.equipment.findMany({
-    where: { status: { not: "RETIRED" } },
+    where: { status: { not: "RETIRED" }, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
     orderBy: { name: "asc" },
     select: { id: true, name: true, code: true },
   });

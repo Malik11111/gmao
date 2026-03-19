@@ -18,26 +18,29 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default async function StatistiquesPage() {
-  await requireRole([Role.ADMIN, Role.MANAGER, Role.TECHNICIAN]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER, Role.TECHNICIAN]);
+  const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
   const now = new Date();
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
   const [allRequests, equipmentsByCategory, statusCounts, totalEquipment, totalRequests] = await Promise.all([
     prisma.request.findMany({
-      where: { createdAt: { gte: twelveMonthsAgo } },
+      where: { createdAt: { gte: twelveMonthsAgo }, ...estFilter },
       select: { createdAt: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.equipment.findMany({
+      where: { ...estFilter },
       select: { category: { select: { name: true } } },
     }),
     prisma.request.groupBy({
       by: ["status"],
       _count: true,
+      where: { ...estFilter },
     }),
-    prisma.equipment.count(),
-    prisma.request.count(),
+    prisma.equipment.count({ where: { ...estFilter } }),
+    prisma.request.count({ where: { ...estFilter } }),
   ]);
 
   // Monthly data
@@ -81,7 +84,7 @@ export default async function StatistiquesPage() {
 
   // Average resolution (requests that reached DONE)
   const doneHistories = await prisma.statusHistory.findMany({
-    where: { toStatus: "DONE" },
+    where: { toStatus: "DONE", ...(user.establishmentId ? { request: { establishmentId: user.establishmentId } } : {}) },
     include: { request: { select: { createdAt: true } } },
   });
 

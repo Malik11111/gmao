@@ -11,12 +11,12 @@ type Props = {
 };
 
 export default async function NewCategoryPage({ searchParams }: Props) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
 
   const technicians = await prisma.user.findMany({
-    where: { role: "TECHNICIAN", active: true },
+    where: { role: "TECHNICIAN", active: true, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
     select: { id: true, firstName: true, lastName: true },
     orderBy: { firstName: "asc" },
   });

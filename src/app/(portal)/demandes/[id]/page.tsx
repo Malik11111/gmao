@@ -24,8 +24,8 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
   const success = typeof qp.success === "string" ? qp.success : undefined;
 
   const [request, technicians] = await Promise.all([
-    prisma.request.findUnique({
-      where: { id },
+    prisma.request.findFirst({
+      where: { id, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
       include: {
         equipment: {
           include: { location: true },
@@ -48,6 +48,7 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
           in: [Role.TECHNICIAN, Role.MANAGER, Role.ADMIN],
         },
         active: true,
+        ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
       },
       orderBy: [{ role: "asc" }, { lastName: "asc" }],
     }),

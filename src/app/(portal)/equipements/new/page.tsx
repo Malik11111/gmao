@@ -11,8 +11,11 @@ type NewEquipmentPageProps = {
 };
 
 export default async function NewEquipmentPage({ searchParams }: NewEquipmentPageProps) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
-  const categories = await prisma.equipmentCategory.findMany({ orderBy: { name: "asc" } });
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const categories = await prisma.equipmentCategory.findMany({
+    where: { ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
+    orderBy: { name: "asc" },
+  });
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
 

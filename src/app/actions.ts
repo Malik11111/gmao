@@ -29,7 +29,7 @@ function getDateOrUndefined(value?: string) {
   return Number.isNaN(date.getTime()) ? undefined : date;
 }
 
-async function findOrCreateLocation(formData: FormData) {
+async function findOrCreateLocation(formData: FormData, establishmentId?: string | null) {
   const building = getOptionalString(formData, "building");
   const floor = getOptionalString(formData, "floor");
   const room = getOptionalString(formData, "room");
@@ -43,6 +43,7 @@ async function findOrCreateLocation(formData: FormData) {
       building,
       floor: floor ?? null,
       room: room ?? null,
+      ...(establishmentId ? { establishmentId } : {}),
     },
   });
 
@@ -55,6 +56,7 @@ async function findOrCreateLocation(formData: FormData) {
       building,
       floor,
       room,
+      establishmentId,
     },
   });
 }
@@ -103,7 +105,7 @@ export async function logoutAction() {
 }
 
 export async function createEquipmentAction(formData: FormData) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
 
   const schema = z.object({
     name: z.string().min(3, "Le nom de l'equipement est requis."),
@@ -126,8 +128,8 @@ export async function createEquipmentAction(formData: FormData) {
     "equipments",
   );
 
-  const location = await findOrCreateLocation(formData);
-  const code = await getNextEquipmentCode();
+  const location = await findOrCreateLocation(formData, user.establishmentId);
+  const code = await getNextEquipmentCode(user.establishmentId);
 
   const equipment = await prisma.equipment.create({
     data: {
@@ -136,6 +138,7 @@ export async function createEquipmentAction(formData: FormData) {
       name: parsed.data.name,
       categoryId: getOptionalString(formData, "categoryId"),
       locationId: location?.id,
+      establishmentId: user.establishmentId,
       serialNumber: getOptionalString(formData, "serialNumber"),
       brand: getOptionalString(formData, "brand"),
       model: getOptionalString(formData, "model"),
@@ -192,7 +195,7 @@ export async function createRequestAction(formData: FormData) {
     "requests",
   );
 
-  const requestNumber = await getNextRequestNumber();
+  const requestNumber = await getNextRequestNumber(user.establishmentId);
 
   // ===== AUTO-ASSIGNMENT =====
   let autoAssignedToId: string | undefined;
@@ -222,6 +225,7 @@ export async function createRequestAction(formData: FormData) {
       requesterId: user.id,
       assignedToId: autoAssignedToId,
       locationId: equipment.locationId,
+      establishmentId: user.establishmentId,
       issueType: parsed.data.issueType as never,
       description: parsed.data.description,
       urgency: parsed.data.urgency as never,
@@ -262,7 +266,7 @@ export async function createRequestAction(formData: FormData) {
 
   // Notify managers (+ contractor info if external)
   const managers = await prisma.user.findMany({
-    where: { role: { in: [Role.ADMIN, Role.MANAGER] }, active: true },
+    where: { role: { in: [Role.ADMIN, Role.MANAGER] }, active: true, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
     select: { id: true },
   });
 
@@ -365,10 +369,10 @@ export async function markAllReadAction() {
 }
 
 export async function updateEquipmentAction(formData: FormData) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
 
   const id = getString(formData, "id");
-  const equipment = await prisma.equipment.findUnique({ where: { id } });
+  const equipment = await prisma.equipment.findFirst({ where: { id, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) } });
 
   if (!equipment) {
     redirect("/equipements");
@@ -395,7 +399,7 @@ export async function updateEquipmentAction(formData: FormData) {
     "equipments",
   );
 
-  const location = await findOrCreateLocation(formData);
+  const location = await findOrCreateLocation(formData, user.establishmentId);
 
   const existingPhotos = equipment.photos as string[] | null;
   const allPhotos = [...(existingPhotos ?? []), ...photos];
@@ -425,11 +429,11 @@ export async function updateEquipmentAction(formData: FormData) {
 }
 
 export async function deleteEquipmentAction(formData: FormData) {
-  await requireRole([Role.ADMIN]);
+  const user = await requireRole([Role.ADMIN]);
 
   const id = getString(formData, "id");
 
-  const requestCount = await prisma.request.count({ where: { equipmentId: id } });
+  const requestCount = await prisma.request.count({ where: { equipmentId: id, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) } });
   if (requestCount > 0) {
     redirect(withSearchParams(`/equipements/${id}`, { error: "Impossible de supprimer : des demandes sont liees a cet equipement." }));
   }
@@ -492,14 +496,14 @@ export async function addCommentAction(formData: FormData) {
 // ===== CATEGORY MANAGEMENT =====
 
 export async function createCategoryAction(formData: FormData) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
 
   const name = getString(formData, "name");
   if (name.length < 2) {
     redirect(withSearchParams("/admin/categories/new", { error: "Le nom est requis." }));
   }
 
-  const existing = await prisma.equipmentCategory.findUnique({ where: { name } });
+  const existing = await prisma.equipmentCategory.findFirst({ where: { name, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) } });
   if (existing) {
     redirect(withSearchParams("/admin/categories/new", { error: "Cette categorie existe deja." }));
   }
@@ -515,6 +519,7 @@ export async function createCategoryAction(formData: FormData) {
       contractorName: isExternal ? getOptionalString(formData, "contractorName") : undefined,
       contractorPhone: isExternal ? getOptionalString(formData, "contractorPhone") : undefined,
       contractorEmail: isExternal ? getOptionalString(formData, "contractorEmail") : undefined,
+      establishmentId: user.establishmentId,
       specialists: specialistIds.length > 0 ? { connect: specialistIds.map((id) => ({ id })) } : undefined,
     },
   });
@@ -524,7 +529,8 @@ export async function createCategoryAction(formData: FormData) {
 }
 
 export async function updateCategoryAction(formData: FormData) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  void user;
 
   const id = getString(formData, "id");
   const name = getString(formData, "name");
@@ -553,7 +559,8 @@ export async function updateCategoryAction(formData: FormData) {
 }
 
 export async function deleteCategoryAction(formData: FormData) {
-  await requireRole([Role.ADMIN]);
+  const user = await requireRole([Role.ADMIN]);
+  void user;
 
   const id = getString(formData, "id");
 
@@ -567,7 +574,7 @@ export async function deleteCategoryAction(formData: FormData) {
 // ===== USER MANAGEMENT =====
 
 export async function createUserAction(formData: FormData) {
-  await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.ADMIN]);
 
   const schema = z.object({
     firstName: z.string().min(2, "Le prenom est requis."),
@@ -605,6 +612,7 @@ export async function createUserAction(formData: FormData) {
       role: parsed.data.role as Role,
       service: getOptionalString(formData, "service"),
       phone: getOptionalString(formData, "phone"),
+      establishmentId: currentUser.establishmentId,
     },
   });
 
@@ -613,7 +621,8 @@ export async function createUserAction(formData: FormData) {
 }
 
 export async function updateUserAction(formData: FormData) {
-  await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.ADMIN]);
+  void currentUser;
 
   const id = getString(formData, "id");
 
@@ -655,7 +664,8 @@ export async function updateUserAction(formData: FormData) {
 }
 
 export async function toggleUserActiveAction(formData: FormData) {
-  await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.ADMIN]);
+  void currentUser;
 
   const userId = getString(formData, "userId");
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { active: true } });
@@ -676,7 +686,7 @@ export async function toggleUserActiveAction(formData: FormData) {
 // ===== MAINTENANCE PREVENTIVE =====
 
 export async function createMaintenancePlanAction(formData: FormData) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
 
   const schema = z.object({
     title: z.string().min(3, "Le titre est requis."),
@@ -701,6 +711,7 @@ export async function createMaintenancePlanAction(formData: FormData) {
       title: parsed.data.title,
       description: getOptionalString(formData, "description"),
       equipmentId: parsed.data.equipmentId,
+      establishmentId: user.establishmentId,
       intervalDays: parsed.data.intervalDays,
       nextDueDate: new Date(parsed.data.nextDueDate),
     },
@@ -711,7 +722,8 @@ export async function createMaintenancePlanAction(formData: FormData) {
 }
 
 export async function toggleMaintenancePlanAction(formData: FormData) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  void user;
 
   const id = getString(formData, "id");
   const plan = await prisma.maintenancePlan.findUnique({ where: { id }, select: { active: true } });
@@ -730,12 +742,13 @@ export async function toggleMaintenancePlanAction(formData: FormData) {
 }
 
 export async function generateMaintenanceAction() {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
 
   const duePlans = await prisma.maintenancePlan.findMany({
     where: {
       active: true,
       nextDueDate: { lte: new Date() },
+      ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
     },
     include: { equipment: true },
   });
@@ -746,12 +759,13 @@ export async function generateMaintenanceAction() {
     const requestNumber = await getNextRequestNumber();
 
     // Find a default technician or fallback to admin/manager
+    const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
     const technician = await prisma.user.findFirst({
-      where: { role: "TECHNICIAN", active: true },
+      where: { role: "TECHNICIAN", active: true, ...estFilter },
       select: { id: true },
     });
     const fallbackUser = technician ?? await prisma.user.findFirst({
-      where: { role: { in: ["ADMIN", "MANAGER"] }, active: true },
+      where: { role: { in: ["ADMIN", "MANAGER"] }, active: true, ...estFilter },
       select: { id: true },
     });
     if (!fallbackUser) continue;
@@ -762,6 +776,7 @@ export async function generateMaintenanceAction() {
         equipmentId: plan.equipmentId,
         requesterId: fallbackUser.id,
         locationId: plan.equipment.locationId,
+        establishmentId: user.establishmentId,
         issueType: "OTHER",
         description: `[Maintenance preventive] ${plan.title}${plan.description ? ` - ${plan.description}` : ""}`,
         urgency: "NORMAL",

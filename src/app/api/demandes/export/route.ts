@@ -15,6 +15,7 @@ export async function GET() {
   }
 
   const requests = await prisma.request.findMany({
+    where: user.establishmentId ? { establishmentId: user.establishmentId } : {},
     include: {
       equipment: { include: { location: true } },
       requester: true,

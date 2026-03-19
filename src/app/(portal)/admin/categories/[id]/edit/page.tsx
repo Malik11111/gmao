@@ -13,18 +13,19 @@ type Props = {
 };
 
 export default async function EditCategoryPage({ params, searchParams }: Props) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
   const { id } = await params;
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;
+  const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
   const [category, technicians] = await Promise.all([
-    prisma.equipmentCategory.findUnique({
-      where: { id },
+    prisma.equipmentCategory.findFirst({
+      where: { id, ...estFilter },
       include: { specialists: { select: { id: true } } },
     }),
     prisma.user.findMany({
-      where: { role: "TECHNICIAN", active: true },
+      where: { role: "TECHNICIAN", active: true, ...estFilter },
       select: { id: true, firstName: true, lastName: true },
       orderBy: { firstName: "asc" },
     }),

@@ -13,11 +13,12 @@ const KANBAN_COLUMNS: { status: RequestStatus; label: string; color: string }[] 
 ];
 
 export default async function KanbanPage() {
-  await requireRole([Role.ADMIN, Role.MANAGER, Role.TECHNICIAN]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER, Role.TECHNICIAN]);
 
   const requests = await prisma.request.findMany({
     where: {
       status: { in: KANBAN_COLUMNS.map((c) => c.status) },
+      ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
     },
     include: {
       equipment: true,

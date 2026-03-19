@@ -13,17 +13,18 @@ type EditEquipmentPageProps = {
 };
 
 export default async function EditEquipmentPage({ params, searchParams }: EditEquipmentPageProps) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
   const { id } = await params;
   const qp = await searchParams;
   const error = typeof qp.error === "string" ? qp.error : undefined;
+  const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
   const [equipment, categories] = await Promise.all([
-    prisma.equipment.findUnique({
-      where: { id },
+    prisma.equipment.findFirst({
+      where: { id, ...estFilter },
       include: { location: true },
     }),
-    prisma.equipmentCategory.findMany({ orderBy: { name: "asc" } }),
+    prisma.equipmentCategory.findMany({ where: { ...estFilter }, orderBy: { name: "asc" } }),
   ]);
 
   if (!equipment) {

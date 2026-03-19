@@ -22,8 +22,8 @@ export default async function EquipmentDetailPage({ params, searchParams }: Equi
   const success = typeof qp.success === "string" ? qp.success : undefined;
   const errorMsg = typeof qp.error === "string" ? qp.error : undefined;
 
-  const equipment = await prisma.equipment.findUnique({
-    where: { id },
+  const equipment = await prisma.equipment.findFirst({
+    where: { id, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
     include: {
       category: true,
       location: true,

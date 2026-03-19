@@ -86,7 +86,7 @@ function computeInterventions(
 }
 
 export default async function PlanningPage({ searchParams }: Props) {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
   const params = await searchParams;
 
   const currentYear = new Date().getFullYear();
@@ -94,7 +94,7 @@ export default async function PlanningPage({ searchParams }: Props) {
   const year = !isNaN(rawYear) && rawYear >= 2020 && rawYear <= 2040 ? rawYear : currentYear;
 
   const plans = await prisma.maintenancePlan.findMany({
-    where: { active: true },
+    where: { active: true, ...(user.establishmentId ? { equipment: { establishmentId: user.establishmentId } } : {}) },
     include: { equipment: { include: { location: true } } },
     orderBy: { nextDueDate: "asc" },
   });

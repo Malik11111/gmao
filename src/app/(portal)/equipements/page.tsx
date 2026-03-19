@@ -19,10 +19,13 @@ export default async function EquipementsPage({ searchParams }: EquipementsPageP
   const status = typeof params.status === "string" ? params.status : "";
   const categoryId = typeof params.category === "string" ? params.category : "";
 
+  const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
+
   const [categories, equipments] = await Promise.all([
-    prisma.equipmentCategory.findMany({ orderBy: { name: "asc" } }),
+    prisma.equipmentCategory.findMany({ where: { ...estFilter }, orderBy: { name: "asc" } }),
     prisma.equipment.findMany({
       where: {
+        ...estFilter,
         ...(status ? { status: status as EquipmentStatus } : {}),
         ...(categoryId ? { categoryId } : {}),
         ...(q

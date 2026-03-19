@@ -1,7 +1,8 @@
 import { prisma } from "@/lib/db";
 
-export async function getNextEquipmentCode() {
+export async function getNextEquipmentCode(establishmentId?: string | null) {
   const last = await prisma.equipment.findFirst({
+    where: establishmentId ? { establishmentId } : undefined,
     orderBy: { code: "desc" },
     select: { code: true },
   });
@@ -14,12 +15,15 @@ export async function getNextEquipmentCode() {
   return `EQ-${String(num + 1).padStart(5, "0")}`;
 }
 
-export async function getNextRequestNumber() {
+export async function getNextRequestNumber(establishmentId?: string | null) {
   const year = new Date().getFullYear();
   const prefix = `DI-${year}-`;
 
   const last = await prisma.request.findFirst({
-    where: { number: { startsWith: prefix } },
+    where: {
+      number: { startsWith: prefix },
+      ...(establishmentId ? { establishmentId } : {}),
+    },
     orderBy: { number: "desc" },
     select: { number: true },
   });

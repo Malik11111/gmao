@@ -12,21 +12,25 @@ type UsersPageProps = {
 };
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {
-  await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.ADMIN]);
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
   const success = typeof params.success === "string" ? params.success : undefined;
+  const estFilter = currentUser.establishmentId ? { establishmentId: currentUser.establishmentId } : {};
 
   const users = await prisma.user.findMany({
-    where: q
-      ? {
-          OR: [
-            { firstName: { contains: q } },
-            { lastName: { contains: q } },
-            { email: { contains: q } },
-          ],
-        }
-      : {},
+    where: {
+      ...estFilter,
+      ...(q
+        ? {
+            OR: [
+              { firstName: { contains: q } },
+              { lastName: { contains: q } },
+              { email: { contains: q } },
+            ],
+          }
+        : {}),
+    },
     orderBy: [{ role: "asc" }, { lastName: "asc" }],
   });
 

@@ -17,9 +17,9 @@ export async function POST(request: Request) {
     return Response.json({ error: "Donnees manquantes" }, { status: 400 });
   }
 
-  const currentRequest = await prisma.request.findUnique({
-    where: { id: requestId },
-    select: { status: true, requesterId: true, number: true },
+  const currentRequest = await prisma.request.findFirst({
+    where: { id: requestId, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
+    select: { id: true, status: true, requesterId: true, number: true },
   });
 
   if (!currentRequest) {

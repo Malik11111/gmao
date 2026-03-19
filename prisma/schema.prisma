@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -47,6 +47,24 @@ enum RequestStatus {
   REJECTED
 }
 
+model Establishment {
+  id               String              @id @default(cuid())
+  name             String
+  slug             String              @unique
+  address          String?
+  phone            String?
+  email            String?
+  active           Boolean             @default(true)
+  users            User[]
+  equipments       Equipment[]
+  locations        Location[]
+  categories       EquipmentCategory[]
+  requests         Request[]
+  maintenancePlans MaintenancePlan[]
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+}
+
 model User {
   id               String           @id @default(cuid())
   email            String           @unique
@@ -57,6 +75,8 @@ model User {
   role             Role             @default(USER)
   service          String?
   active           Boolean          @default(true)
+  establishmentId  String?
+  establishment    Establishment?   @relation(fields: [establishmentId], references: [id])
   requests         Request[]        @relation("RequesterRequests")
   assignedRequests Request[]        @relation("AssignedRequests")
   comments         RequestComment[]
@@ -68,28 +88,34 @@ model User {
 }
 
 model Location {
-  id          String      @id @default(cuid())
-  building    String
-  floor       String?
-  room        String?
-  description String?
-  equipments  Equipment[]
-  requests    Request[]
-  createdAt   DateTime    @default(now())
+  id              String         @id @default(cuid())
+  building        String
+  floor           String?
+  room            String?
+  description     String?
+  establishmentId String?
+  establishment   Establishment? @relation(fields: [establishmentId], references: [id])
+  equipments      Equipment[]
+  requests        Request[]
+  createdAt       DateTime       @default(now())
 
-  @@unique([building, floor, room])
+  @@unique([building, floor, room, establishmentId])
 }
 
 model EquipmentCategory {
-  id              String      @id @default(cuid())
-  name            String      @unique
+  id              String         @id @default(cuid())
+  name            String
   icon            String?
-  isExternal      Boolean     @default(false)
+  isExternal      Boolean        @default(false)
   contractorName  String?
   contractorPhone String?
   contractorEmail String?
+  establishmentId String?
+  establishment   Establishment? @relation(fields: [establishmentId], references: [id])
   equipments      Equipment[]
-  specialists     User[]      @relation("UserSpecialties")
+  specialists     User[]         @relation("UserSpecialties")
+
+  @@unique([name, establishmentId])
 }
 
 model Equipment {
@@ -101,6 +127,8 @@ model Equipment {
   category          EquipmentCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
   locationId        String?
   location          Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  establishmentId   String?
+  establishment     Establishment?     @relation(fields: [establishmentId], references: [id])
   serialNumber      String?
   brand             String?
   model             String?
@@ -129,6 +157,8 @@ model Request {
   assignedTo        User?            @relation("AssignedRequests", fields: [assignedToId], references: [id], onDelete: SetNull)
   locationId        String?
   location          Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  establishmentId   String?
+  establishment     Establishment?   @relation(fields: [establishmentId], references: [id])
   issueType         RequestIssueType
   description       String
   urgency           RequestUrgency   @default(NORMAL)
@@ -177,15 +207,17 @@ model Notification {
 }
 
 model MaintenancePlan {
-  id            String    @id @default(cuid())
-  title         String
-  description   String?
-  equipmentId   String
-  equipment     Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
-  intervalDays  Int
-  nextDueDate   DateTime
-  lastGenerated DateTime?
-  active        Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id              String         @id @default(cuid())
+  title           String
+  description     String?
+  equipmentId     String
+  equipment       Equipment      @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  establishmentId String?
+  establishment   Establishment? @relation(fields: [establishmentId], references: [id])
+  intervalDays    Int
+  nextDueDate     DateTime
+  lastGenerated   DateTime?
+  active          Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
 }

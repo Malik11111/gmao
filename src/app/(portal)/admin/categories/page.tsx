@@ -7,9 +7,10 @@ import { requireRole } from "@/lib/session";
 import { Role } from "@prisma/client";
 
 export default async function CategoriesPage() {
-  await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
 
   const categories = await prisma.equipmentCategory.findMany({
+    where: { ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
     include: {
       _count: { select: { equipments: true } },
       specialists: { select: { id: true, firstName: true, lastName: true } },

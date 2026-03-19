@@ -15,9 +15,12 @@ export async function GET(request: Request) {
     return Response.json({ equipments: [], requests: [] });
   }
 
+  const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
+
   const [equipments, requests] = await Promise.all([
     prisma.equipment.findMany({
       where: {
+        ...estFilter,
         OR: [
           { name: { contains: q } },
           { code: { contains: q } },
@@ -30,6 +33,7 @@ export async function GET(request: Request) {
     }),
     prisma.request.findMany({
       where: {
+        ...estFilter,
         ...(user.role === "USER" ? { requesterId: user.id } : {}),
         OR: [
           { number: { contains: q } },

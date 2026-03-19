@@ -23,6 +23,7 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
 
   const where = {
     ...(user.role === "USER" ? { requesterId: user.id } : {}),
+    ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
     ...(status ? { status: status as RequestStatus } : {}),
     ...(q
       ? {

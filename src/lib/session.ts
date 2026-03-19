@@ -86,6 +86,7 @@ export async function getSessionUser() {
       role: true,
       service: true,
       active: true,
+      establishmentId: true,
     },
   });
 }

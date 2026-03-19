@@ -12,18 +12,21 @@ import { formatDateTime, formatLocation } from "@/lib/utils";
 export default async function DashboardPage() {
   const user = await requireUser();
 
+  const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
+
   const [equipmentCount, alertEquipmentCount, openRequestCount, criticalRequestCount, recentRequests, alerts] = await Promise.all([
-    prisma.equipment.count(),
+    prisma.equipment.count({ where: { ...estFilter } }),
     prisma.equipment.count({
-      where: { status: { in: ["OUT_OF_ORDER", "IN_REPAIR"] } },
+      where: { status: { in: ["OUT_OF_ORDER", "IN_REPAIR"] }, ...estFilter },
     }),
     prisma.request.count({
-      where: { status: { in: ["NEW", "ACKNOWLEDGED", "WAITING", "IN_PROGRESS"] } },
+      where: { status: { in: ["NEW", "ACKNOWLEDGED", "WAITING", "IN_PROGRESS"] }, ...estFilter },
     }),
     prisma.request.count({
-      where: { urgency: "CRITICAL", status: { notIn: ["DONE", "CLOSED", "REJECTED"] } },
+      where: { urgency: "CRITICAL", status: { notIn: ["DONE", "CLOSED", "REJECTED"] }, ...estFilter },
     }),
     prisma.request.findMany({
+      where: { ...estFilter },
       orderBy: { createdAt: "desc" },
       include: {
         equipment: { include: { location: true } },
@@ -32,7 +35,7 @@ export default async function DashboardPage() {
       take: 5,
     }),
     prisma.equipment.findMany({
-      where: { status: { in: ["OUT_OF_ORDER", "IN_REPAIR"] } },
+      where: { status: { in: ["OUT_OF_ORDER", "IN_REPAIR"] }, ...estFilter },
       include: { location: true },
       orderBy: { updatedAt: "desc" },
       take: 4,
