@@ -1,5 +1,5 @@
 import { Role } from "@prisma/client";
-import { CalendarClock, Camera, MessageSquare, QrCode, UserRound, Wrench } from "lucide-react";
+import { CalendarClock, Camera, Mail, MessageSquare, QrCode, UserRound, Wrench } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
@@ -28,7 +28,7 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
       where: { id, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
       include: {
         equipment: {
-          include: { location: true },
+          include: { location: true, category: true },
         },
         requester: true,
         assignedTo: true,
@@ -64,6 +64,23 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
 
   const canUpdate = canOperateRequests(user.role);
   const photos = readStringArray(request.photos);
+  const category = request.equipment.category;
+  const isExternal = category?.isExternal && category?.contractorEmail;
+
+  const mailtoUrl = isExternal
+    ? `mailto:${category.contractorEmail}?subject=${encodeURIComponent(
+        `Demande d'intervention ${request.number} - ${request.equipment.name}`
+      )}&body=${encodeURIComponent(
+        `Bonjour,\n\nNous souhaitons vous signaler un probleme sur l'equipement suivant :\n\n` +
+        `Equipement : ${request.equipment.name}\n` +
+        `Localisation : ${formatLocation(request.equipment.location)}\n` +
+        `Type de probleme : ${requestIssueTypeLabels[request.issueType]}\n` +
+        `Urgence : ${request.urgency}\n` +
+        `Description : ${request.description}\n\n` +
+        `Numero de demande : ${request.number}\n\n` +
+        `Merci de nous contacter pour planifier l'intervention.\n\nCordialement`
+      )}`
+    : null;
 
   return (
     <div className="space-y-6">
@@ -273,6 +290,26 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
                   Enregistrer les changements
                 </button>
               </form>
+            </div>
+          ) : null}
+
+          {isExternal && canUpdate ? (
+            <div className="panel p-6 border-amber-200 bg-amber-50/50">
+              <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-[0.22em] text-amber-700">
+                <Mail className="h-4 w-4" />
+                Prestataire externe
+              </div>
+              <div className="mt-4 rounded-[24px] border border-amber-200 bg-white/85 p-4">
+                <p className="text-sm font-semibold text-slate-950">{category.contractorName}</p>
+                <p className="mt-1 text-sm text-slate-600">{category.contractorEmail}</p>
+              </div>
+              <a
+                href={mailtoUrl!}
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700"
+              >
+                <Mail className="h-4 w-4" />
+                Contacter le prestataire
+              </a>
             </div>
           ) : null}
 
