@@ -1,8 +1,8 @@
 import { prisma } from "@/lib/db";
 
-export async function getNextEquipmentCode(establishmentId?: string | null) {
+export async function getNextEquipmentCode(_establishmentId?: string | null) {
+  // code must be globally unique (not per-establishment)
   const last = await prisma.equipment.findFirst({
-    where: establishmentId ? { establishmentId } : undefined,
     orderBy: { code: "desc" },
     select: { code: true },
   });
