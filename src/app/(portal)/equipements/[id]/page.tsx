@@ -186,15 +186,13 @@ export default async function EquipmentDetailPage({ params, searchParams }: Equi
               <p className="mt-2 text-center text-sm leading-6 text-slate-600">
                 A coller sur l&apos;equipement pour ouvrir la fiche publique de scan.
               </p>
-              <a
-                href={`/api/qrcode/${equipment.qrCode}`}
-                target="_blank"
-                rel="noopener noreferrer"
+              <Link
+                href={`/equipements/${equipment.id}/qr-print`}
                 className="secondary-button mt-4 w-full justify-center gap-2"
               >
                 <Printer className="h-4 w-4" />
                 Imprimer le QR code
-              </a>
+              </Link>
             </div>
           </div>
 

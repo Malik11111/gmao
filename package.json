@@ -7,7 +7,7 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "prisma db push && next start",
     "lint": "eslint",
     "db:push": "prisma db push",
