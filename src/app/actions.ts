@@ -249,7 +249,12 @@ export async function updateRequestAction(formData: FormData) {
   }
 
   const requestId = getString(formData, "requestId");
-  const nextStatus = getString(formData, "status") as RequestStatus;
+  const rawStatus = getString(formData, "status");
+  const validStatuses: RequestStatus[] = ["NEW", "ACKNOWLEDGED", "WAITING", "IN_PROGRESS", "DONE", "CLOSED", "REJECTED"];
+  if (!validStatuses.includes(rawStatus as RequestStatus)) {
+    redirect("/demandes");
+  }
+  const nextStatus = rawStatus as RequestStatus;
   const assignedToId = getOptionalString(formData, "assignedToId");
   const dueDate = getDateOrUndefined(getOptionalString(formData, "dueDate"));
   const technicalPriority = getOptionalString(formData, "technicalPriority");
@@ -449,7 +454,7 @@ export async function createUserAction(formData: FormData) {
     firstName: z.string().min(2, "Le prenom est requis."),
     lastName: z.string().min(2, "Le nom est requis."),
     email: z.string().email("Email invalide."),
-    password: z.string().min(6, "Le mot de passe doit faire au moins 6 caracteres."),
+    password: z.string().min(8, "Le mot de passe doit faire au moins 8 caracteres."),
     role: z.string(),
   });
 
