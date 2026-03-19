@@ -26,6 +26,12 @@ const baseLinks: NavLink[] = [
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
+const personnelLinks: NavLink[] = [
+  { href: "/equipements", label: "Equipements", icon: Package },
+  { href: "/demandes", label: "Demandes", icon: ClipboardList },
+  { href: "/notifications", label: "Notifications", icon: Bell },
+];
+
 const techLinks: NavLink[] = [
   { href: "/demandes/kanban", label: "Vue Kanban", icon: ClipboardList },
   { href: "/statistiques", label: "Statistiques", icon: BarChart3 },
@@ -50,7 +56,7 @@ export function MobileMenu({ user }: MobileMenuProps) {
   const isTech = isManager || user.role === "TECHNICIAN";
 
   const allLinks: NavLink[] = [
-    ...baseLinks,
+    ...(user.role === "USER" ? personnelLinks : baseLinks),
     ...(isTech ? techLinks : []),
     ...(isManager ? managerLinks : []),
     ...(user.role === "ADMIN" ? adminLinks : []),

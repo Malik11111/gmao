@@ -15,14 +15,14 @@ export async function getNextEquipmentCode(_establishmentId?: string | null) {
   return `EQ-${String(num + 1).padStart(5, "0")}`;
 }
 
-export async function getNextRequestNumber(establishmentId?: string | null) {
+export async function getNextRequestNumber(_establishmentId?: string | null) {
+  // number must be globally unique (not per-establishment)
   const year = new Date().getFullYear();
   const prefix = `DI-${year}-`;
 
   const last = await prisma.request.findFirst({
     where: {
       number: { startsWith: prefix },
-      ...(establishmentId ? { establishmentId } : {}),
     },
     orderBy: { number: "desc" },
     select: { number: true },

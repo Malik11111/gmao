@@ -1,5 +1,5 @@
 import { RequestStatus } from "@prisma/client";
-import { ChevronLeft, ChevronRight, Download, LayoutGrid, Search } from "lucide-react";
+import { AlertCircle, ChevronLeft, ChevronRight, Download, LayoutGrid, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -85,7 +85,12 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
                 Vue Kanban
               </Link>
             </div>
-          ) : null
+          ) : (
+            <Link href="/equipements" className="primary-button gap-2">
+              <AlertCircle className="h-4 w-4" />
+              Effectuer une demande
+            </Link>
+          )
         }
       />
 

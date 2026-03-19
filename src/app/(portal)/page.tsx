@@ -1,5 +1,6 @@
 import { AlertTriangle, Boxes, ClipboardList, Plus, TimerReset } from "lucide-react";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { QrScanner } from "@/components/qr-scanner";
 import { StatCard } from "@/components/stat-card";
@@ -11,6 +12,11 @@ import { formatDateTime, formatLocation } from "@/lib/utils";
 
 export default async function DashboardPage() {
   const user = await requireUser();
+
+  // Personnel n'a pas besoin du tableau de bord → redirigé vers ses demandes
+  if (user.role === "USER") {
+    redirect("/demandes");
+  }
 
   const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
