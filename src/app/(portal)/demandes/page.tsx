@@ -1,5 +1,5 @@
 import { RequestStatus } from "@prisma/client";
-import { ChevronLeft, ChevronRight, LayoutGrid, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, Download, LayoutGrid, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
@@ -74,10 +74,16 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
         }
         actions={
           canOperateRequests(user.role) ? (
-            <Link href="/demandes/kanban" className="secondary-button gap-2">
-              <LayoutGrid className="h-4 w-4" />
-              Vue Kanban
-            </Link>
+            <div className="flex items-center gap-3">
+              <a href="/api/demandes/export" className="secondary-button gap-2">
+                <Download className="h-4 w-4" />
+                Exporter Excel
+              </a>
+              <Link href="/demandes/kanban" className="secondary-button gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                Vue Kanban
+              </Link>
+            </div>
           ) : null
         }
       />
