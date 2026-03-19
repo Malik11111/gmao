@@ -1,0 +1,185 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  TECHNICIAN
+  MANAGER
+  ADMIN
+}
+
+enum EquipmentStatus {
+  IN_SERVICE
+  OUT_OF_ORDER
+  IN_REPAIR
+  OUT_OF_SERVICE
+  RETIRED
+}
+
+enum RequestIssueType {
+  COMPLETE_FAILURE
+  MALFUNCTION
+  ABNORMAL_NOISE
+  LEAK
+  BREAKAGE
+  OTHER
+}
+
+enum RequestUrgency {
+  NORMAL
+  URGENT
+  CRITICAL
+}
+
+enum RequestStatus {
+  NEW
+  ACKNOWLEDGED
+  WAITING
+  IN_PROGRESS
+  DONE
+  CLOSED
+  REJECTED
+}
+
+model User {
+  id               String           @id @default(cuid())
+  email            String           @unique
+  passwordHash     String
+  firstName        String
+  lastName         String
+  phone            String?
+  role             Role             @default(USER)
+  service          String?
+  active           Boolean          @default(true)
+  requests         Request[]        @relation("RequesterRequests")
+  assignedRequests Request[]        @relation("AssignedRequests")
+  comments         RequestComment[]
+  histories        StatusHistory[]
+  notifications    Notification[]
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model Location {
+  id          String      @id @default(cuid())
+  building    String
+  floor       String?
+  room        String?
+  description String?
+  equipments  Equipment[]
+  requests    Request[]
+  createdAt   DateTime    @default(now())
+
+  @@unique([building, floor, room])
+}
+
+model EquipmentCategory {
+  id         String      @id @default(cuid())
+  name       String      @unique
+  icon       String?
+  equipments Equipment[]
+}
+
+model Equipment {
+  id                String             @id @default(cuid())
+  code              String             @unique
+  qrCode            String             @unique
+  name              String
+  categoryId        String?
+  category          EquipmentCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  locationId        String?
+  location          Location?          @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  serialNumber      String?
+  brand             String?
+  model             String?
+  purchaseDate      DateTime?
+  commissioningDate DateTime?
+  warrantyEndDate   DateTime?
+  supplier          String?
+  status            EquipmentStatus    @default(IN_SERVICE)
+  notes             String?
+  photos            Json?
+  documents         Json?
+  requests          Request[]
+  maintenancePlans  MaintenancePlan[]
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+}
+
+model Request {
+  id                String           @id @default(cuid())
+  number            String           @unique
+  equipmentId       String
+  equipment         Equipment        @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  requesterId       String
+  requester         User             @relation("RequesterRequests", fields: [requesterId], references: [id], onDelete: Restrict)
+  assignedToId      String?
+  assignedTo        User?            @relation("AssignedRequests", fields: [assignedToId], references: [id], onDelete: SetNull)
+  locationId        String?
+  location          Location?        @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  issueType         RequestIssueType
+  description       String
+  urgency           RequestUrgency   @default(NORMAL)
+  status            RequestStatus    @default(NEW)
+  technicalPriority String?
+  dueDate           DateTime?
+  photos            Json?
+  resolutionNotes   String?
+  comments          RequestComment[]
+  history           StatusHistory[]
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
+}
+
+model RequestComment {
+  id        String   @id @default(cuid())
+  requestId String
+  request   Request  @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  authorId  String
+  author    User     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  message   String
+  createdAt DateTime @default(now())
+}
+
+model StatusHistory {
+  id         String        @id @default(cuid())
+  requestId  String
+  request    Request       @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  fromStatus RequestStatus?
+  toStatus   RequestStatus
+  actorId    String?
+  actor      User?         @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  comment    String?
+  createdAt  DateTime      @default(now())
+}
+
+model Notification {
+  id          String   @id @default(cuid())
+  recipientId String
+  recipient   User     @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  link        String?
+  read        Boolean  @default(false)
+  createdAt   DateTime @default(now())
+}
+
+model MaintenancePlan {
+  id            String    @id @default(cuid())
+  title         String
+  description   String?
+  equipmentId   String
+  equipment     Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  intervalDays  Int
+  nextDueDate   DateTime
+  lastGenerated DateTime?
+  active        Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}

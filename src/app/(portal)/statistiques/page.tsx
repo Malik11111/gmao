@@ -1,0 +1,131 @@
+import { Role } from "@prisma/client";
+import { Clock, TrendingUp } from "lucide-react";
+import { PageHeader } from "@/components/page-header";
+import { StatCard } from "@/components/stat-card";
+import { CategoryChart, MonthlyChart, StatusChart } from "@/components/stats-charts";
+import { prisma } from "@/lib/db";
+import { requestStatusLabels } from "@/lib/labels";
+import { requireRole } from "@/lib/session";
+
+const STATUS_COLORS: Record<string, string> = {
+  NEW: "#3b82f6",
+  ACKNOWLEDGED: "#6366f1",
+  WAITING: "#d97706",
+  IN_PROGRESS: "#ea580c",
+  DONE: "#059669",
+  CLOSED: "#6b7280",
+  REJECTED: "#dc2626",
+};
+
+export default async function StatistiquesPage() {
+  await requireRole([Role.ADMIN, Role.MANAGER, Role.TECHNICIAN]);
+
+  const now = new Date();
+  const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+  const [allRequests, equipmentsByCategory, statusCounts, totalEquipment, totalRequests] = await Promise.all([
+    prisma.request.findMany({
+      where: { createdAt: { gte: twelveMonthsAgo } },
+      select: { createdAt: true },
+      orderBy: { createdAt: "asc" },
+    }),
+    prisma.equipment.findMany({
+      select: { category: { select: { name: true } } },
+    }),
+    prisma.request.groupBy({
+      by: ["status"],
+      _count: true,
+    }),
+    prisma.equipment.count(),
+    prisma.request.count(),
+  ]);
+
+  // Monthly data
+  const monthlyMap = new Map<string, number>();
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    monthlyMap.set(key, 0);
+  }
+  for (const req of allRequests) {
+    const d = new Date(req.createdAt);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    if (monthlyMap.has(key)) {
+      monthlyMap.set(key, (monthlyMap.get(key) ?? 0) + 1);
+    }
+  }
+  const monthNames = ["Jan", "Fev", "Mar", "Avr", "Mai", "Jun", "Jul", "Aou", "Sep", "Oct", "Nov", "Dec"];
+  const monthlyData = Array.from(monthlyMap.entries()).map(([key, count]) => ({
+    month: monthNames[parseInt(key.split("-")[1], 10) - 1],
+    count,
+  }));
+
+  // Category data
+  const categoryMap = new Map<string, number>();
+  for (const eq of equipmentsByCategory) {
+    const name = eq.category?.name ?? "Sans categorie";
+    categoryMap.set(name, (categoryMap.get(name) ?? 0) + 1);
+  }
+  const categoryData = Array.from(categoryMap.entries())
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count);
+
+  // Status data
+  const statusData = statusCounts
+    .map((s) => ({
+      name: requestStatusLabels[s.status] ?? s.status,
+      count: s._count,
+      color: STATUS_COLORS[s.status] ?? "#6b7280",
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  // Average resolution (requests that reached DONE)
+  const doneHistories = await prisma.statusHistory.findMany({
+    where: { toStatus: "DONE" },
+    include: { request: { select: { createdAt: true } } },
+  });
+
+  let avgResolutionDays = 0;
+  if (doneHistories.length > 0) {
+    const totalMs = doneHistories.reduce((sum, h) => {
+      return sum + (new Date(h.createdAt).getTime() - new Date(h.request.createdAt).getTime());
+    }, 0);
+    avgResolutionDays = Math.round(totalMs / doneHistories.length / (1000 * 60 * 60 * 24) * 10) / 10;
+  }
+
+  return (
+    <div className="space-y-6">
+      <PageHeader
+        title="Statistiques"
+        description="Indicateurs de performance et tendances de la maintenance sur les 12 derniers mois."
+      />
+
+      <section className="grid gap-4 grid-cols-2 xl:grid-cols-4">
+        <StatCard eyebrow="Total equipements" value={String(totalEquipment)} description="Dans le parc" icon={<TrendingUp className="h-5 w-5" />} color="indigo" />
+        <StatCard eyebrow="Total demandes" value={String(totalRequests)} description="Depuis le debut" icon={<TrendingUp className="h-5 w-5" />} color="emerald" />
+        <StatCard eyebrow="Ce mois" value={String(monthlyData[monthlyData.length - 1]?.count ?? 0)} description="Nouvelles demandes" icon={<TrendingUp className="h-5 w-5" />} color="amber" />
+        <StatCard eyebrow="Temps moyen" value={avgResolutionDays > 0 ? `${avgResolutionDays}j` : "N/A"} description="Resolution moyenne" icon={<Clock className="h-5 w-5" />} color="rose" />
+      </section>
+
+      <section className="grid gap-6 xl:grid-cols-2">
+        <div className="panel p-6">
+          <h2 className="text-base font-bold text-gray-900">Demandes par mois</h2>
+          <p className="text-xs text-gray-400 mt-0.5 mb-4">Evolution sur 12 mois</p>
+          <MonthlyChart data={monthlyData} />
+        </div>
+
+        <div className="panel p-6">
+          <h2 className="text-base font-bold text-gray-900">Repartition par statut</h2>
+          <p className="text-xs text-gray-400 mt-0.5 mb-4">Toutes les demandes</p>
+          <StatusChart data={statusData} />
+        </div>
+      </section>
+
+      <section className="panel p-6">
+        <h2 className="text-base font-bold text-gray-900">Equipements par categorie</h2>
+        <p className="text-xs text-gray-400 mt-0.5 mb-4">Distribution du parc</p>
+        <CategoryChart data={categoryData} />
+      </section>
+    </div>
+  );
+}
