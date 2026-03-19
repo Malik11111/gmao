@@ -115,28 +115,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </button>
           </form>
 
-          <div className="mt-8 rounded-xl border border-gray-200 bg-white p-5">
-            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 mb-3">Comptes de demonstration</p>
-            <div className="space-y-2 text-sm">
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
-                <code className="text-indigo-600 font-medium text-xs">admin@ime.local</code>
-                <span className="text-gray-400 text-xs">Administrateur</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
-                <code className="text-indigo-600 font-medium text-xs">responsable@ime.local</code>
-                <span className="text-gray-400 text-xs">Responsable</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5 border-b border-gray-100">
-                <code className="text-indigo-600 font-medium text-xs">tech@ime.local</code>
-                <span className="text-gray-400 text-xs">Technicien</span>
-              </div>
-              <div className="flex items-center justify-between py-1.5">
-                <code className="text-indigo-600 font-medium text-xs">personnel@ime.local</code>
-                <span className="text-gray-400 text-xs">Personnel</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-2">Mot de passe : <code className="font-medium text-gray-600">demo1234</code></p>
-            </div>
-          </div>
         </div>
       </div>
     </div>
