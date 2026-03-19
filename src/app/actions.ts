@@ -123,42 +123,48 @@ export async function createEquipmentAction(formData: FormData) {
     redirect(withSearchParams("/equipements/new", { error: parsed.error.issues[0]?.message }));
   }
 
-  let photos: string[] = [];
   try {
-    photos = await saveUploadedFiles(
-      formData.getAll("photos").filter((file): file is File => file instanceof File),
-      "equipments",
-    );
-  } catch {
-    // File upload may fail on read-only filesystems (e.g. Railway)
+    let photos: string[] = [];
+    try {
+      photos = await saveUploadedFiles(
+        formData.getAll("photos").filter((file): file is File => file instanceof File),
+        "equipments",
+      );
+    } catch {
+      // File upload may fail on read-only filesystems (e.g. Railway)
+    }
+
+    const location = await findOrCreateLocation(formData, user.establishmentId);
+    const code = await getNextEquipmentCode(user.establishmentId);
+
+    const equipment = await prisma.equipment.create({
+      data: {
+        code,
+        qrCode: code,
+        name: parsed.data.name,
+        categoryId: getOptionalString(formData, "categoryId"),
+        locationId: location?.id,
+        establishmentId: user.establishmentId,
+        serialNumber: getOptionalString(formData, "serialNumber"),
+        brand: getOptionalString(formData, "brand"),
+        model: getOptionalString(formData, "model"),
+        purchaseDate: getDateOrUndefined(getOptionalString(formData, "purchaseDate")),
+        commissioningDate: getDateOrUndefined(getOptionalString(formData, "commissioningDate")),
+        warrantyEndDate: getDateOrUndefined(getOptionalString(formData, "warrantyEndDate")),
+        supplier: getOptionalString(formData, "supplier"),
+        status: parsed.data.status as never,
+        notes: getOptionalString(formData, "notes"),
+        photos,
+      },
+    });
+
+    revalidatePath("/equipements");
+    redirect(withSearchParams(`/equipements/${equipment.id}`, { success: "Equipement cree avec succes." }));
+  } catch (error) {
+    if (error && typeof error === "object" && "digest" in error) throw error; // re-throw Next.js redirect
+    const message = error instanceof Error ? error.message : "Erreur inconnue";
+    redirect(withSearchParams("/equipements/new", { error: message }));
   }
-
-  const location = await findOrCreateLocation(formData, user.establishmentId);
-  const code = await getNextEquipmentCode(user.establishmentId);
-
-  const equipment = await prisma.equipment.create({
-    data: {
-      code,
-      qrCode: code,
-      name: parsed.data.name,
-      categoryId: getOptionalString(formData, "categoryId"),
-      locationId: location?.id,
-      establishmentId: user.establishmentId,
-      serialNumber: getOptionalString(formData, "serialNumber"),
-      brand: getOptionalString(formData, "brand"),
-      model: getOptionalString(formData, "model"),
-      purchaseDate: getDateOrUndefined(getOptionalString(formData, "purchaseDate")),
-      commissioningDate: getDateOrUndefined(getOptionalString(formData, "commissioningDate")),
-      warrantyEndDate: getDateOrUndefined(getOptionalString(formData, "warrantyEndDate")),
-      supplier: getOptionalString(formData, "supplier"),
-      status: parsed.data.status as never,
-      notes: getOptionalString(formData, "notes"),
-      photos,
-    },
-  });
-
-  revalidatePath("/equipements");
-  redirect(withSearchParams(`/equipements/${equipment.id}`, { success: "Equipement cree avec succes." }));
 }
 
 export async function createRequestAction(formData: FormData) {
