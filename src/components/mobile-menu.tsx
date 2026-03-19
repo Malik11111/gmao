@@ -4,6 +4,7 @@ import { Bell, ClipboardList, Home, Menu, Package, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
+import { createPortal } from "react-dom";
 import { logoutAction } from "@/app/actions";
 import { roleLabels } from "@/lib/labels";
 
@@ -34,7 +35,7 @@ export function MobileMenu({ user }: MobileMenuProps) {
         <Menu className="h-5 w-5 text-gray-700" />
       </button>
 
-      {open ? (
+      {open ? createPortal(
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)}>
           <nav
             className="absolute right-0 top-0 h-full w-72 bg-gradient-to-b from-indigo-950 via-indigo-950 to-slate-900 text-white p-5 space-y-6 shadow-2xl"
@@ -84,7 +85,8 @@ export function MobileMenu({ user }: MobileMenuProps) {
               </form>
             </div>
           </nav>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );
