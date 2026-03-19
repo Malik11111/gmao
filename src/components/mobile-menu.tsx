@@ -57,7 +57,7 @@ export function MobileMenu({ user }: MobileMenuProps) {
                     href={link.href}
                     onClick={() => setOpen(false)}
                     className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
-                      isActive ? "bg-indigo-600 text-white" : "text-indigo-200 hover:bg-white/8"
+                      isActive ? "bg-indigo-600 text-white" : "text-white/80 hover:bg-white/10 hover:text-white"
                     }`}
                   >
                     <Icon className="h-4 w-4" />
