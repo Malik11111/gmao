@@ -78,7 +78,7 @@ export function MobileMenu({ user }: MobileMenuProps) {
                 </div>
               </div>
               <form action={logoutAction} className="mt-3">
-                <button className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-indigo-200 transition hover:bg-white/10">
+                <button className="w-full rounded-lg bg-red-500/90 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600">
                   Se deconnecter
                 </button>
               </form>

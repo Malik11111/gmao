@@ -34,7 +34,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
                 <Wrench className="h-5 w-5" />
               </div>
               <div>
-                <h1 className="text-base font-bold tracking-tight">GMAO IME</h1>
+                <h1 className="text-base font-bold tracking-tight">GMAO</h1>
                 <p className="text-[11px] text-indigo-300">Gestion Maintenance</p>
               </div>
             </div>
@@ -86,7 +86,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
                 </div>
               </div>
               <form action={logoutAction} className="mt-3">
-                <button className="w-full rounded-lg border border-white/15 bg-white/5 px-3 py-2 text-xs font-medium text-indigo-200 transition hover:bg-white/10 hover:text-white">
+                <button className="w-full rounded-lg bg-red-500/90 px-3 py-2.5 text-sm font-semibold text-white transition hover:bg-red-600">
                   Se deconnecter
                 </button>
               </form>
@@ -102,7 +102,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
                 <Wrench className="h-4 w-4" />
               </div>
-              <h1 className="text-base font-bold text-gray-900">GMAO IME</h1>
+              <h1 className="text-base font-bold text-gray-900">GMAO</h1>
             </div>
             <div className="flex items-center gap-2">
               <Link href="/notifications" className="relative rounded-lg p-2 hover:bg-gray-100 transition">
