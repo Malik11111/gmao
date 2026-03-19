@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, ClipboardList, Home, Menu, Package, X } from "lucide-react";
+import { BarChart3, Bell, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Menu, Package, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -17,17 +17,44 @@ type MobileMenuProps = {
   };
 };
 
-const links = [
+type NavLink = { href: string; label: string; icon: React.ElementType };
+
+const baseLinks: NavLink[] = [
   { href: "/", label: "Tableau de bord", icon: Home },
   { href: "/equipements", label: "Equipements", icon: Package },
   { href: "/demandes", label: "Demandes", icon: ClipboardList },
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
+const techLinks: NavLink[] = [
+  { href: "/demandes/kanban", label: "Vue Kanban", icon: ClipboardList },
+  { href: "/statistiques", label: "Statistiques", icon: BarChart3 },
+];
+
+const managerLinks: NavLink[] = [
+  { href: "/maintenance", label: "Maint. preventive", icon: CalendarClock },
+  { href: "/maintenance/planning", label: "Planning annuel", icon: Calendar },
+];
+
+const adminLinks: NavLink[] = [
+  { href: "/admin/categories", label: "Categories", icon: FolderCog },
+  { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Settings },
+];
+
 export function MobileMenu({ user }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const initials = `${user.firstName[0]}${user.lastName[0]}`;
+
+  const isManager = user.role === "ADMIN" || user.role === "MANAGER";
+  const isTech = isManager || user.role === "TECHNICIAN";
+
+  const allLinks: NavLink[] = [
+    ...baseLinks,
+    ...(isTech ? techLinks : []),
+    ...(isManager ? managerLinks : []),
+    ...(user.role === "ADMIN" ? adminLinks : []),
+  ];
 
   return (
     <>
@@ -38,18 +65,18 @@ export function MobileMenu({ user }: MobileMenuProps) {
       {open ? createPortal(
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" onClick={() => setOpen(false)}>
           <nav
-            className="absolute right-0 top-0 h-full w-72 bg-gradient-to-b from-indigo-950 via-indigo-950 to-slate-900 text-white p-5 space-y-6 shadow-2xl"
+            className="absolute right-0 top-0 h-full w-72 bg-gradient-to-b from-indigo-950 via-indigo-950 to-slate-900 text-white p-5 shadow-2xl flex flex-col"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between mb-4">
               <p className="text-sm font-bold">Menu</p>
               <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-white/10 transition">
                 <X className="h-5 w-5 text-indigo-200" />
               </button>
             </div>
 
-            <div className="space-y-1">
-              {links.map((link) => {
+            <div className="space-y-1 flex-1 overflow-y-auto">
+              {allLinks.map((link) => {
                 const isActive = link.href === "/" ? pathname === "/" : pathname.startsWith(link.href);
                 const Icon = link.icon;
                 return (
@@ -68,7 +95,7 @@ export function MobileMenu({ user }: MobileMenuProps) {
               })}
             </div>
 
-            <div className="rounded-xl bg-white/8 border border-white/10 p-4 mt-auto">
+            <div className="rounded-xl bg-white/8 border border-white/10 p-4 mt-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-xs font-bold">
                   {initials}
