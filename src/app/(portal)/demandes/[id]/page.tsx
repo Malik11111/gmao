@@ -305,7 +305,7 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
               </div>
               <a
                 href={mailtoUrl!}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-amber-600 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-amber-700"
+                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-orange-500/90 px-4 py-2.5 text-sm font-semibold text-white shadow-md shadow-orange-500/20 transition hover:bg-orange-800 hover:shadow-lg hover:shadow-orange-800/25 hover:-translate-y-0.5"
               >
                 <Mail className="h-4 w-4" />
                 Contacter le prestataire
