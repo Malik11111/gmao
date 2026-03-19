@@ -1,4 +1,4 @@
-import { BarChart3, Bell, CalendarClock, ClipboardList, FolderCog, Home, Package, Settings, Wrench } from "lucide-react";
+import { BarChart3, Bell, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Package, Settings, Wrench } from "lucide-react";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions";
 import { GlobalSearch } from "@/components/global-search";
@@ -63,6 +63,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
               <>
                 <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">Gestion</p>
                 <NavLink href="/maintenance" icon={<CalendarClock className="h-4 w-4" />} label="Maint. preventive" />
+                <NavLink href="/maintenance/planning" icon={<Calendar className="h-4 w-4" />} label="Planning annuel" />
               </>
             ) : null}
 

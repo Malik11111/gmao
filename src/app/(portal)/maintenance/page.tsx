@@ -1,5 +1,5 @@
 import { Role } from "@prisma/client";
-import { CalendarClock, Play, Plus } from "lucide-react";
+import { Calendar, CalendarClock, Play, Plus } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { prisma } from "@/lib/db";
@@ -38,6 +38,10 @@ export default async function MaintenancePage({ searchParams }: MaintenancePageP
                 </button>
               </form>
             ) : null}
+            <Link href="/maintenance/planning" className="secondary-button gap-2">
+              <Calendar className="h-4 w-4" />
+              Planning annuel
+            </Link>
             <Link href="/maintenance/new" className="primary-button gap-2">
               <Plus className="h-4 w-4" />
               Nouveau plan
