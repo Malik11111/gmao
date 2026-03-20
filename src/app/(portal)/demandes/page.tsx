@@ -22,7 +22,11 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
   const page = Math.max(1, parseInt(typeof params.page === "string" ? params.page : "1", 10) || 1);
 
   const where = {
-    ...(user.role === "USER" ? { requesterId: user.id } : {}),
+    ...(user.role === "USER"
+      ? { requesterId: user.id }
+      : user.role === "TECHNICIAN"
+        ? { assignedToId: user.id }
+        : {}),
     ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
     ...(status ? { status: status as RequestStatus } : { status: { not: RequestStatus.ARCHIVED } }),
     ...(q

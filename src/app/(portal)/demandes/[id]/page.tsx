@@ -62,6 +62,10 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
     notFound();
   }
 
+  if (user.role === "TECHNICIAN" && request.assignedToId !== user.id) {
+    notFound();
+  }
+
   const canUpdate = canOperateRequests(user.role);
   const photos = readStringArray(request.photos);
   const category = request.equipment.category;

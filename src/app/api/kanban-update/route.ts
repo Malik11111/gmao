@@ -1,5 +1,6 @@
 import { RequestStatus } from "@prisma/client";
 import { prisma } from "@/lib/db";
+import { requestStatusLabels } from "@/lib/labels";
 import { getSessionUser, canOperateRequests } from "@/lib/session";
 
 export async function POST(request: Request) {
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     data: {
       recipientId: currentRequest.requesterId,
       title: "Statut mis a jour",
-      message: `${currentRequest.number} est maintenant ${newStatus.toLowerCase()}.`,
+      message: `${currentRequest.number} est maintenant ${requestStatusLabels[newStatus] ?? newStatus}.`,
       link: `/demandes/${requestId}`,
     },
   });

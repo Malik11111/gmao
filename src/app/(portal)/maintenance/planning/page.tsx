@@ -52,27 +52,25 @@ function computeInterventions(
     const next = new Date(plan.nextDueDate);
     const intervalMs = plan.intervalDays * 86400000;
 
-    // Find all occurrences within the year
-    // Start from the plan's nextDueDate and go forward/backward
+    // Start from nextDueDate and go forward only
     let cursor = new Date(next);
 
-    // Go backward to find first occurrence in or before the year
-    while (cursor > yearStart) {
-      cursor = new Date(cursor.getTime() - intervalMs);
+    // If nextDueDate is before the year, advance to the first occurrence in the year
+    while (cursor < yearStart) {
+      cursor = new Date(cursor.getTime() + intervalMs);
     }
-    // Now go forward through the year
+
+    // Go forward through the year
     while (cursor <= yearEnd) {
-      if (cursor >= yearStart && cursor <= yearEnd) {
-        const month = cursor.getMonth();
-        map.get(month)!.push({
-          date: new Date(cursor),
-          planTitle: plan.title,
-          equipmentName: plan.equipment.name,
-          locationLabel,
-          intervalDays: plan.intervalDays,
-          planId: plan.id,
-        });
-      }
+      const month = cursor.getMonth();
+      map.get(month)!.push({
+        date: new Date(cursor),
+        planTitle: plan.title,
+        equipmentName: plan.equipment.name,
+        locationLabel,
+        intervalDays: plan.intervalDays,
+        planId: plan.id,
+      });
       cursor = new Date(cursor.getTime() + intervalMs);
     }
   }

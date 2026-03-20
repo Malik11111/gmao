@@ -15,6 +15,7 @@ const STATUS_COLORS: Record<string, string> = {
   DONE: "#059669",
   CLOSED: "#6b7280",
   REJECTED: "#dc2626",
+  ARCHIVED: "#94a3b8",
 };
 
 export default async function StatistiquesPage() {

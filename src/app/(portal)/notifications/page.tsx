@@ -1,5 +1,5 @@
 import { Bell, CheckCheck } from "lucide-react";
-import Link from "next/link";
+import { NotificationLink } from "@/components/notification-link";
 import { PageHeader } from "@/components/page-header";
 import { prisma } from "@/lib/db";
 import { requireUser } from "@/lib/session";
@@ -38,12 +38,13 @@ export default async function NotificationsPage() {
         {notifications.map((notification) => (
           <div key={notification.id}>
             {notification.link ? (
-              <Link
+              <NotificationLink
                 href={notification.link}
+                notificationId={notification.id}
                 className={`panel block p-5 transition hover:-translate-y-0.5 hover:border-slate-300 ${!notification.read ? "border-sky-200 bg-sky-50/60" : ""}`}
               >
                 <NotificationContent notification={notification} />
-              </Link>
+              </NotificationLink>
             ) : (
               <div className={`panel p-5 ${!notification.read ? "border-sky-200 bg-sky-50/60" : ""}`}>
                 <NotificationContent notification={notification} />

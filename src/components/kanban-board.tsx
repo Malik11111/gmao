@@ -115,7 +115,7 @@ export function KanbanBoard({ columns: initialColumns }: { columns: KanbanColumn
         </div>
       ) : null}
 
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
         {columns.map((col) => (
           <div
             key={col.status}

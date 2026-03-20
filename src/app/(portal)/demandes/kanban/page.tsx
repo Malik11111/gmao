@@ -7,6 +7,7 @@ import { requireRole } from "@/lib/session";
 
 const KANBAN_COLUMNS: { status: RequestStatus; label: string; color: string }[] = [
   { status: "NEW", label: "Nouvelles", color: "#3b82f6" },
+  { status: "ACKNOWLEDGED", label: "Prise en compte", color: "#6366f1" },
   { status: "IN_PROGRESS", label: "En cours", color: "#ea580c" },
   { status: "WAITING", label: "En attente", color: "#d97706" },
   { status: "DONE", label: "Terminees", color: "#059669" },
@@ -19,6 +20,7 @@ export default async function KanbanPage() {
     where: {
       status: { in: KANBAN_COLUMNS.map((c) => c.status) },
       ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
+      ...(user.role === "TECHNICIAN" ? { assignedToId: user.id } : {}),
     },
     include: {
       equipment: true,

@@ -7,6 +7,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { getNextEquipmentCode, getNextRequestNumber } from "@/lib/ids";
+import { requestStatusLabels } from "@/lib/labels";
 import { authenticateUser, canOperateRequests, createSession, deleteSession, requireRole, requireUser } from "@/lib/session";
 import { saveUploadedFiles } from "@/lib/uploads";
 
@@ -361,7 +362,7 @@ export async function updateRequestAction(formData: FormData) {
       data: {
         recipientId: currentRequest.requesterId,
         title: "Votre demande a evolue",
-        message: `${currentRequest.number} est maintenant ${nextStatus.toLowerCase()}.`,
+        message: `${currentRequest.number} est maintenant ${requestStatusLabels[nextStatus] ?? nextStatus}.`,
         link: `/demandes/${requestId}`,
       },
     });
@@ -847,6 +848,7 @@ export async function deleteArchivedRequestAction(formData: FormData) {
   // Delete related records first
   await prisma.statusHistory.deleteMany({ where: { requestId } });
   await prisma.requestComment.deleteMany({ where: { requestId } });
+  await prisma.notification.deleteMany({ where: { link: `/demandes/${requestId}` } });
   await prisma.request.delete({ where: { id: requestId } });
 
   revalidatePath("/demandes/archives");
