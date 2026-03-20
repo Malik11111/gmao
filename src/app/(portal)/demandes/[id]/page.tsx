@@ -1,6 +1,5 @@
 import { Role } from "@prisma/client";
 import { CalendarClock, Camera, Mail, MessageSquare, QrCode, UserRound, Wrench } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { addCommentAction, updateRequestAction } from "@/app/actions";
@@ -151,13 +150,11 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
                   Photos du signalement
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2">
-                  {photos.map((photo) => (
-                    <Image
-                      key={photo}
+                  {photos.map((photo, i) => (
+                    <img
+                      key={i}
                       src={photo}
-                      alt={request.number}
-                      width={900}
-                      height={600}
+                      alt={`${request.number} photo ${i + 1}`}
                       className="h-52 w-full rounded-[24px] border border-slate-200 object-cover shadow-sm"
                     />
                   ))}

@@ -121,13 +121,11 @@ export default async function EquipmentDetailPage({ params, searchParams }: Equi
                   Photos jointes
                 </div>
                 <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-                  {photos.map((photo) => (
-                    <Image
-                      key={photo}
+                  {photos.map((photo, i) => (
+                    <img
+                      key={i}
                       src={photo}
-                      alt={equipment.name}
-                      width={900}
-                      height={600}
+                      alt={`${equipment.name} photo ${i + 1}`}
                       className="h-48 w-full rounded-[24px] border border-slate-200 object-cover shadow-sm"
                     />
                   ))}

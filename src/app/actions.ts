@@ -125,15 +125,10 @@ export async function createEquipmentAction(formData: FormData) {
   }
 
   try {
-    let photos: string[] = [];
-    try {
-      photos = await saveUploadedFiles(
-        formData.getAll("photos").filter((file): file is File => file instanceof File),
-        "equipments",
-      );
-    } catch {
-      // File upload may fail on read-only filesystems (e.g. Railway)
-    }
+    const photos = await saveUploadedFiles(
+      formData.getAll("photos").filter((file): file is File => file instanceof File),
+      "equipments",
+    );
 
     const location = await findOrCreateLocation(formData, user.establishmentId);
     const code = await getNextEquipmentCode(user.establishmentId);
@@ -202,15 +197,10 @@ export async function createRequestAction(formData: FormData) {
     redirect("/equipements");
   }
 
-  let photos: string[] = [];
-  try {
-    photos = await saveUploadedFiles(
-      formData.getAll("photos").filter((file): file is File => file instanceof File),
-      "requests",
-    );
-  } catch {
-    // File upload may fail on read-only filesystems (e.g. Railway)
-  }
+  const photos = await saveUploadedFiles(
+    formData.getAll("photos").filter((file): file is File => file instanceof File),
+    "requests",
+  );
 
   const requestNumber = await getNextRequestNumber(user.establishmentId);
 
