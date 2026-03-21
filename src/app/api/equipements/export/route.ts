@@ -17,7 +17,7 @@ export async function GET() {
   });
 
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "GMAO IME";
+  workbook.creator = "GMAO";
   workbook.created = new Date();
 
   const sheet = workbook.addWorksheet("Equipements", {

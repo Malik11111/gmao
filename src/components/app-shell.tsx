@@ -35,7 +35,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
               </div>
               <div>
                 <h1 className="text-base font-bold tracking-tight">GMAO</h1>
-                <p className="text-[11px] text-indigo-300">Gestion Maintenance</p>
+                <p className="text-[11px] text-indigo-300">Maintenance</p>
               </div>
             </Link>
           </div>

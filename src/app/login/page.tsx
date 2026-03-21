@@ -36,7 +36,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-indigo-300">Maintenance</p>
-              <h1 className="text-xl font-bold">GMAO IME</h1>
+              <h1 className="text-xl font-bold">GMAO</h1>
             </div>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
 
         <div className="relative z-10">
-          <p className="text-sm text-indigo-400">GMAO IME - Gestion de Maintenance Assistee par Ordinateur</p>
+          <p className="text-sm text-indigo-400">GMAO - Gestion de Maintenance Assistee par Ordinateur</p>
         </div>
       </div>
 
@@ -78,7 +78,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
             <div>
               <p className="text-xs font-semibold uppercase tracking-widest text-indigo-600">Maintenance</p>
-              <h1 className="text-xl font-bold text-gray-900">GMAO IME</h1>
+              <h1 className="text-xl font-bold text-gray-900">GMAO</h1>
             </div>
           </div>
 

@@ -14,8 +14,8 @@ const mono = IBM_Plex_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GMAO IME",
-  description: "Application de gestion de maintenance pour IME",
+  title: "GMAO",
+  description: "Application de gestion de maintenance assistee par ordinateur",
 };
 
 export default function RootLayout({
