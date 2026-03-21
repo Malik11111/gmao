@@ -1,12 +1,12 @@
 import { EquipmentStatus } from "@prisma/client";
-import { Download, Plus, Search } from "lucide-react";
+import { ChevronRight, Download, Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/db";
 import { equipmentStatusOptions } from "@/lib/labels";
 import { canManageEquipment, requireUser } from "@/lib/session";
-import { formatDate, formatLocation } from "@/lib/utils";
+import { formatLocation } from "@/lib/utils";
 
 type EquipementsPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -100,39 +100,67 @@ export default async function EquipementsPage({ searchParams }: EquipementsPageP
         </form>
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-2">
+      {/* Desktop table */}
+      <section className="panel hidden lg:block overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-5 py-3">Designation</th>
+              <th className="px-5 py-3">Categorie</th>
+              <th className="px-5 py-3">Localisation</th>
+              <th className="px-5 py-3">Demandes</th>
+              <th className="px-5 py-3">Statut</th>
+              <th className="px-5 py-3 w-10" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {equipments.map((equipment) => (
+              <tr key={equipment.id} className="group transition hover:bg-indigo-50/40">
+                <td className="px-5 py-3.5">
+                  <Link href={`/equipements/${equipment.id}`} className="block">
+                    <p className="font-semibold text-slate-950">{equipment.name}</p>
+                    <p className="text-xs text-slate-400">{equipment.code}</p>
+                  </Link>
+                </td>
+                <td className="px-5 py-3.5">
+                  {equipment.category ? (
+                    <span className="inline-block rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-700">{equipment.category.name}</span>
+                  ) : (
+                    <span className="text-xs text-slate-400">-</span>
+                  )}
+                </td>
+                <td className="px-5 py-3.5 text-slate-600">{formatLocation(equipment.location)}</td>
+                <td className="px-5 py-3.5 text-slate-600">{equipment._count.requests}</td>
+                <td className="px-5 py-3.5"><StatusBadge kind="equipment" value={equipment.status} /></td>
+                <td className="px-5 py-3.5">
+                  <Link href={`/equipements/${equipment.id}`} className="text-slate-400 group-hover:text-indigo-600 transition">
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {/* Mobile cards */}
+      <section className="lg:hidden space-y-2">
         {equipments.map((equipment) => (
           <Link
             key={equipment.id}
             href={`/equipements/${equipment.id}`}
-            className="panel flex flex-col gap-5 p-5 transition hover:-translate-y-0.5 hover:border-slate-300"
+            className="panel flex items-center justify-between gap-3 p-4 transition hover:border-slate-300"
           >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.22em] text-slate-500">{equipment.code}</p>
-                <h2 className="mt-2 text-2xl font-semibold tracking-tight text-slate-950">{equipment.name}</h2>
-                <p className="mt-2 text-sm text-slate-600">
-                  {equipment.category?.name ?? "Categorie non renseignee"} - {formatLocation(equipment.location)}
-                </p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-semibold text-slate-950 truncate">{equipment.name}</p>
+                <span className="text-xs text-slate-400">{equipment.code}</span>
               </div>
-              <StatusBadge kind="equipment" value={equipment.status} />
+              <p className="text-xs text-slate-500 mt-0.5">{equipment.category?.name ?? "-"} - {formatLocation(equipment.location)}</p>
             </div>
-
-            <div className="grid gap-4 rounded-[24px] border border-slate-200 bg-white/80 p-4 md:grid-cols-3">
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Marque / modele</p>
-                <p className="mt-2 text-sm font-medium text-slate-900">
-                  {[equipment.brand, equipment.model].filter(Boolean).join(" ") || "Non renseigne"}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Historique</p>
-                <p className="mt-2 text-sm font-medium text-slate-900">{equipment._count.requests} demande(s)</p>
-              </div>
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Garantie</p>
-                <p className="mt-2 text-sm font-medium text-slate-900">{formatDate(equipment.warrantyEndDate)}</p>
-              </div>
+            <div className="flex items-center gap-2 shrink-0">
+              <StatusBadge kind="equipment" value={equipment.status} />
+              <ChevronRight className="h-4 w-4 text-slate-400" />
             </div>
           </Link>
         ))}
@@ -140,8 +168,8 @@ export default async function EquipementsPage({ searchParams }: EquipementsPageP
 
       {equipments.length === 0 ? (
         <section className="panel p-10 text-center">
-          <h2 className="text-2xl font-semibold text-slate-950">Aucun equipement ne correspond aux filtres</h2>
-          <p className="mt-3 helper">Ajuste la recherche ou cree un nouvel equipement pour enrichir l&apos;inventaire.</p>
+          <h2 className="text-lg font-semibold text-slate-950">Aucun equipement ne correspond aux filtres</h2>
+          <p className="mt-2 text-sm text-slate-500">Ajuste la recherche ou cree un nouvel equipement.</p>
         </section>
       ) : null}
     </div>

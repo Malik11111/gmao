@@ -122,45 +122,73 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
         </form>
       </section>
 
-      <section className="space-y-4">
+      {/* Desktop table */}
+      <section className="panel hidden lg:block overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-5 py-3">Numero</th>
+              <th className="px-5 py-3">Equipement</th>
+              <th className="px-5 py-3">Type</th>
+              <th className="px-5 py-3">Statut</th>
+              <th className="px-5 py-3">Urgence</th>
+              <th className="px-5 py-3">Maj</th>
+              <th className="px-5 py-3 w-10" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {requests.map((request) => (
+              <tr key={request.id} className="group transition hover:bg-indigo-50/40">
+                <td className="px-5 py-3.5">
+                  <Link href={`/demandes/${request.id}`} className="font-semibold text-slate-950">{request.number}</Link>
+                </td>
+                <td className="px-5 py-3.5">
+                  <Link href={`/demandes/${request.id}`} className="block">
+                    <p className="font-medium text-slate-900">{request.equipment.name}</p>
+                    <p className="text-xs text-slate-400">{formatLocation(request.equipment.location)}</p>
+                  </Link>
+                </td>
+                <td className="px-5 py-3.5 text-slate-600">{requestIssueTypeLabels[request.issueType]}</td>
+                <td className="px-5 py-3.5"><StatusBadge kind="request" value={request.status} /></td>
+                <td className="px-5 py-3.5"><StatusBadge kind="urgency" value={request.urgency} /></td>
+                <td className="px-5 py-3.5 text-xs text-slate-500 whitespace-nowrap">{formatDateTime(request.updatedAt)}</td>
+                <td className="px-5 py-3.5">
+                  <Link href={`/demandes/${request.id}`} className="text-slate-400 group-hover:text-indigo-600 transition">
+                    <ChevronRight className="h-4 w-4" />
+                  </Link>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      {/* Mobile cards */}
+      <section className="lg:hidden space-y-2">
         {requests.map((request) => (
           <Link
             key={request.id}
             href={`/demandes/${request.id}`}
-            className="panel block p-5 transition hover:-translate-y-0.5 hover:border-slate-300"
+            className="panel flex items-center justify-between gap-3 p-4 transition hover:border-slate-300"
           >
-            <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="space-y-3">
-                <div className="flex flex-wrap items-center gap-3">
-                  <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">{request.number}</p>
-                  <StatusBadge kind="request" value={request.status} />
-                  <StatusBadge kind="urgency" value={request.urgency} />
-                </div>
-                <div>
-                  <h2 className="text-2xl font-semibold tracking-tight text-slate-950">{request.equipment.name}</h2>
-                  <p className="mt-2 text-sm text-slate-600">{formatLocation(request.equipment.location)}</p>
-                </div>
-                <p className="text-sm leading-6 text-slate-600">{requestIssueTypeLabels[request.issueType]} - {request.description}</p>
+            <div className="min-w-0 flex-1">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-slate-400">{request.number}</span>
+                <StatusBadge kind="request" value={request.status} />
+                <StatusBadge kind="urgency" value={request.urgency} />
               </div>
-
-              <div className="grid gap-3 text-sm text-slate-500">
-                <p>
-                  Demandeur : {request.requester.firstName} {request.requester.lastName}
-                </p>
-                <p>
-                  Assigne : {request.assignedTo ? `${request.assignedTo.firstName} ${request.assignedTo.lastName}` : "Non assigne"}
-                </p>
-                <p>Maj : {formatDateTime(request.updatedAt)}</p>
-              </div>
+              <p className="font-semibold text-slate-950 truncate mt-1">{request.equipment.name}</p>
+              <p className="text-xs text-slate-500 mt-0.5">{requestIssueTypeLabels[request.issueType]} - {formatDateTime(request.updatedAt)}</p>
             </div>
+            <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
           </Link>
         ))}
       </section>
 
       {requests.length === 0 ? (
         <section className="panel p-10 text-center">
-          <h2 className="text-2xl font-semibold text-slate-950">Aucune demande a afficher</h2>
-          <p className="mt-3 helper">Le flux est vide pour l&apos;instant ou aucun resultat ne correspond a la recherche.</p>
+          <h2 className="text-lg font-semibold text-slate-950">Aucune demande a afficher</h2>
+          <p className="mt-2 text-sm text-slate-500">Le flux est vide ou aucun resultat ne correspond a la recherche.</p>
         </section>
       ) : null}
 

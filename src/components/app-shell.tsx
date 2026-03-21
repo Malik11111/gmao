@@ -29,7 +29,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
         {/* ===== SIDEBAR (desktop) ===== */}
         <aside className="hidden lg:flex w-[260px] flex-col bg-gradient-to-b from-indigo-950 via-indigo-950 to-slate-900 text-white fixed inset-y-0 left-0 z-30">
           <div className="px-6 pt-6 pb-4">
-            <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-600 shadow-lg shadow-indigo-600/30">
                 <Wrench className="h-5 w-5" />
               </div>
@@ -37,7 +37,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
                 <h1 className="text-base font-bold tracking-tight">GMAO</h1>
                 <p className="text-[11px] text-indigo-300">Gestion Maintenance</p>
               </div>
-            </div>
+            </Link>
           </div>
 
           <div className="px-4 pb-3">
@@ -103,12 +103,12 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
         <div className="flex-1 lg:ml-[260px] flex flex-col">
           {/* Mobile top bar */}
           <header className="lg:hidden sticky top-0 z-20 flex items-center justify-between bg-white/90 backdrop-blur border-b border-gray-200 px-4 py-3">
-            <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-600 text-white">
                 <Wrench className="h-4 w-4" />
               </div>
               <h1 className="text-base font-bold text-gray-900">GMAO</h1>
-            </div>
+            </Link>
             <div className="flex items-center gap-2">
               <Link href="/notifications" className="relative rounded-lg p-2 hover:bg-gray-100 transition">
                 <Bell className="h-5 w-5 text-gray-600" />

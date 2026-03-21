@@ -63,48 +63,81 @@ export default async function NotificationsPage() {
         }
       />
 
-      <section className="space-y-4">
-        {notifications.map((notification) => (
-          <div key={notification.id}>
-            {notification.link ? (
-              <NotificationLink
-                href={notification.link}
-                notificationId={notification.id}
-                className={`panel block p-5 transition hover:-translate-y-0.5 hover:border-slate-300 ${!notification.read ? "border-sky-200 bg-sky-50/60" : ""}`}
-              >
-                <NotificationContent notification={notification} />
-              </NotificationLink>
-            ) : (
-              <div className={`panel p-5 ${!notification.read ? "border-sky-200 bg-sky-50/60" : ""}`}>
-                <NotificationContent notification={notification} />
+      {/* Desktop table */}
+      <section className="panel hidden lg:block overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-5 py-3 w-8" />
+              <th className="px-5 py-3">Titre</th>
+              <th className="px-5 py-3">Message</th>
+              <th className="px-5 py-3">Date</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {notifications.map((notification) => {
+              const rowClass = !notification.read ? "bg-sky-50/60" : "";
+              const inner = (
+                <>
+                  <td className="px-5 py-3.5 w-8">{!notification.read ? <span className="inline-block h-2.5 w-2.5 rounded-full bg-sky-500" /> : null}</td>
+                  <td className="px-5 py-3.5 font-semibold text-slate-950">{notification.title}</td>
+                  <td className="px-5 py-3.5 text-slate-600">{notification.message}</td>
+                  <td className="px-5 py-3.5 text-xs text-slate-500 whitespace-nowrap">{formatDateTime(notification.createdAt)}</td>
+                </>
+              );
+              return notification.link ? (
+                <NotificationLink key={notification.id} href={notification.link} notificationId={notification.id} className={`table-row transition hover:bg-indigo-50/40 ${rowClass}`}>
+                  {inner}
+                </NotificationLink>
+              ) : (
+                <tr key={notification.id} className={rowClass}>
+                  {inner}
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </section>
+
+      {/* Mobile cards */}
+      <section className="lg:hidden space-y-2">
+        {notifications.map((notification) => {
+          const content = (
+            <div className="flex items-start gap-3">
+              {!notification.read ? <span className="mt-1.5 h-2.5 w-2.5 rounded-full bg-sky-500 shrink-0" /> : <span className="mt-1.5 h-2.5 w-2.5 shrink-0" />}
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="font-semibold text-slate-950 text-sm truncate">{notification.title}</p>
+                  <p className="text-xs text-slate-400 whitespace-nowrap">{formatDateTime(notification.createdAt)}</p>
+                </div>
+                <p className="text-xs text-slate-600 mt-0.5 truncate">{notification.message}</p>
               </div>
-            )}
-          </div>
-        ))}
+            </div>
+          );
+          return notification.link ? (
+            <NotificationLink
+              key={notification.id}
+              href={notification.link}
+              notificationId={notification.id}
+              className={`panel block p-4 transition hover:border-slate-300 ${!notification.read ? "border-sky-200 bg-sky-50/60" : ""}`}
+            >
+              {content}
+            </NotificationLink>
+          ) : (
+            <div key={notification.id} className={`panel p-4 ${!notification.read ? "border-sky-200 bg-sky-50/60" : ""}`}>
+              {content}
+            </div>
+          );
+        })}
       </section>
 
       {notifications.length === 0 ? (
         <section className="panel p-10 text-center">
           <Bell className="mx-auto h-12 w-12 text-slate-300" />
-          <h2 className="mt-4 text-2xl font-semibold text-slate-950">Aucune notification</h2>
-          <p className="mt-3 helper">Les notifications apparaitront ici quand des demandes seront creees ou mises a jour.</p>
+          <h2 className="mt-4 text-lg font-semibold text-slate-950">Aucune notification</h2>
+          <p className="mt-2 text-sm text-slate-500">Les notifications apparaitront ici quand des demandes seront creees ou mises a jour.</p>
         </section>
       ) : null}
-    </div>
-  );
-}
-
-function NotificationContent({ notification }: { notification: { title: string; message: string; read: boolean; createdAt: Date } }) {
-  return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="space-y-2">
-        <div className="flex items-center gap-3">
-          {!notification.read ? <span className="h-2.5 w-2.5 rounded-full bg-sky-500" /> : null}
-          <p className="font-semibold text-slate-950">{notification.title}</p>
-        </div>
-        <p className="text-sm text-slate-600">{notification.message}</p>
-      </div>
-      <p className="text-sm text-slate-500 whitespace-nowrap">{formatDateTime(notification.createdAt)}</p>
     </div>
   );
 }
