@@ -19,6 +19,7 @@ export default async function DashboardPage() {
   }
 
   const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
+  const techFilter = user.role === "TECHNICIAN" ? { assignedToId: user.id } : {};
 
   const [equipmentCount, alertEquipmentCount, openRequestCount, criticalRequestCount, recentRequests, alerts] = await Promise.all([
     prisma.equipment.count({ where: { ...estFilter } }),
@@ -26,13 +27,13 @@ export default async function DashboardPage() {
       where: { status: { in: ["OUT_OF_ORDER", "IN_REPAIR"] }, ...estFilter },
     }),
     prisma.request.count({
-      where: { status: { in: ["NEW", "ACKNOWLEDGED", "WAITING", "IN_PROGRESS"] }, ...estFilter },
+      where: { status: { in: ["NEW", "ACKNOWLEDGED", "WAITING", "IN_PROGRESS"] }, ...estFilter, ...techFilter },
     }),
     prisma.request.count({
-      where: { urgency: "CRITICAL", status: { notIn: ["DONE", "CLOSED", "REJECTED"] }, ...estFilter },
+      where: { urgency: "CRITICAL", status: { notIn: ["DONE", "CLOSED", "REJECTED"] }, ...estFilter, ...techFilter },
     }),
     prisma.request.findMany({
-      where: { ...estFilter },
+      where: { ...estFilter, ...techFilter },
       orderBy: { createdAt: "desc" },
       include: {
         equipment: { include: { location: true } },

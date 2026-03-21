@@ -10,16 +10,26 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  // Find closed requests to archive
+  const closedRequests = await prisma.request.findMany({
+    where: { status: RequestStatus.CLOSED },
+    select: { id: true },
+  });
+
   // Archive closed requests
   const archived = await prisma.request.updateMany({
     where: { status: RequestStatus.CLOSED },
     data: { status: RequestStatus.ARCHIVED },
   });
 
-  // Delete read notifications
-  const deleted = await prisma.notification.deleteMany({
-    where: { read: true },
-  });
+  // Delete only notifications linked to the archived requests
+  let deleted = { count: 0 };
+  if (closedRequests.length > 0) {
+    const archivedLinks = closedRequests.map((r) => `/demandes/${r.id}`);
+    deleted = await prisma.notification.deleteMany({
+      where: { link: { in: archivedLinks } },
+    });
+  }
 
   return NextResponse.json({
     archivedRequests: archived.count,

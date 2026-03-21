@@ -2,7 +2,8 @@ import { Role } from "@prisma/client";
 import { CalendarClock, Camera, Mail, MessageSquare, QrCode, UserRound, Wrench } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { addCommentAction, updateRequestAction } from "@/app/actions";
+import { updateRequestAction } from "@/app/actions";
+import { CommentForm } from "@/components/comment-form";
 import { PageHeader } from "@/components/page-header";
 import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/db";
@@ -187,18 +188,7 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
               )}
             </div>
 
-            <form action={addCommentAction} className="mt-6 space-y-4">
-              <input type="hidden" name="requestId" value={request.id} />
-              <div className="space-y-2">
-                <label className="label" htmlFor="message">
-                  Ajouter un commentaire
-                </label>
-                <textarea className="field min-h-32" id="message" name="message" placeholder="Precisions, retour de diagnostic, information au demandeur..." />
-              </div>
-              <button className="secondary-button" type="submit">
-                Envoyer le commentaire
-              </button>
-            </form>
+            <CommentForm requestId={request.id} />
           </div>
         </div>
 

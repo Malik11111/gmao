@@ -2,6 +2,7 @@ import { Bell, CheckCheck } from "lucide-react";
 import { NotificationLink } from "@/components/notification-link";
 import { PageHeader } from "@/components/page-header";
 import { prisma } from "@/lib/db";
+import { translateNotificationMessage } from "@/lib/labels";
 import { requireUser } from "@/lib/session";
 import { formatDateTime } from "@/lib/utils";
 import { markAllReadAction } from "@/app/actions";
@@ -9,11 +10,39 @@ import { markAllReadAction } from "@/app/actions";
 export default async function NotificationsPage() {
   const user = await requireUser();
 
-  const notifications = await prisma.notification.findMany({
+  const rawNotifications = await prisma.notification.findMany({
     where: { recipientId: user.id },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
+
+  // Find and delete orphaned notifications (linking to deleted requests)
+  const linkedNotifs = rawNotifications.filter((n) => n.link?.startsWith("/demandes/"));
+  if (linkedNotifs.length > 0) {
+    const requestIds = linkedNotifs
+      .map((n) => n.link!.replace("/demandes/", ""))
+      .filter((id) => id.length > 0);
+    const existingRequests = await prisma.request.findMany({
+      where: { id: { in: requestIds } },
+      select: { id: true },
+    });
+    const existingIds = new Set(existingRequests.map((r) => r.id));
+    const orphanedIds = linkedNotifs
+      .filter((n) => !existingIds.has(n.link!.replace("/demandes/", "")))
+      .map((n) => n.id);
+    if (orphanedIds.length > 0) {
+      await prisma.notification.deleteMany({ where: { id: { in: orphanedIds } } });
+    }
+  }
+
+  const notifications = (await prisma.notification.findMany({
+    where: { recipientId: user.id },
+    orderBy: { createdAt: "desc" },
+    take: 50,
+  })).map((n) => ({
+    ...n,
+    message: translateNotificationMessage(n.message),
+  }));
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

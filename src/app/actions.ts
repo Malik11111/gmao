@@ -850,21 +850,26 @@ export async function archiveNowAction() {
   const user = await requireRole([Role.ADMIN, Role.MANAGER]);
   const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
+  // Find closed requests to archive
+  const closedRequests = await prisma.request.findMany({
+    where: { status: RequestStatus.CLOSED, ...estFilter },
+    select: { id: true },
+  });
+
   // Archive closed requests
   const archived = await prisma.request.updateMany({
     where: { status: RequestStatus.CLOSED, ...estFilter },
     data: { status: RequestStatus.ARCHIVED },
   });
 
-  // Delete read notifications for all users in this establishment
-  const users = user.establishmentId
-    ? await prisma.user.findMany({ where: { establishmentId: user.establishmentId }, select: { id: true } })
-    : [];
-  const userIds = users.map((u) => u.id);
-
-  const deleted = userIds.length > 0
-    ? await prisma.notification.deleteMany({ where: { read: true, recipientId: { in: userIds } } })
-    : await prisma.notification.deleteMany({ where: { read: true } });
+  // Delete only notifications linked to the archived requests
+  let deleted = { count: 0 };
+  if (closedRequests.length > 0) {
+    const archivedLinks = closedRequests.map((r) => `/demandes/${r.id}`);
+    deleted = await prisma.notification.deleteMany({
+      where: { link: { in: archivedLinks } },
+    });
+  }
 
   revalidatePath("/demandes/archives");
   revalidatePath("/demandes");

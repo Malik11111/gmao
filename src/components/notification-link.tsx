@@ -14,11 +14,15 @@ export function NotificationLink({ href, notificationId, className, children }: 
 
   async function handleClick(e: React.MouseEvent) {
     e.preventDefault();
-    fetch("/api/notifications/read", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id: notificationId }),
-    });
+    try {
+      await fetch("/api/notifications/read", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: notificationId }),
+      });
+    } catch {
+      // ignore network errors
+    }
     router.push(href);
     router.refresh();
   }

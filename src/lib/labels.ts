@@ -72,6 +72,32 @@ export const requestUrgencyStyles: Record<RequestUrgency, string> = {
   CRITICAL: "bg-red-50 text-red-700 border-red-200",
 };
 
+// Map for translating raw English status values that may appear in old notification messages
+const statusTranslations: Record<string, string> = {
+  in_progress: "En cours",
+  IN_PROGRESS: "En cours",
+  done: "Terminee",
+  DONE: "Terminee",
+  closed: "Cloturee",
+  CLOSED: "Cloturee",
+  waiting: "En attente",
+  WAITING: "En attente",
+  acknowledged: "Prise en compte",
+  ACKNOWLEDGED: "Prise en compte",
+  new: "Nouvelle",
+  NEW: "Nouvelle",
+  rejected: "Rejetee",
+  REJECTED: "Rejetee",
+  archived: "Archivee",
+  ARCHIVED: "Archivee",
+};
+
+export function translateNotificationMessage(message: string): string {
+  return message.replace(/\b(in_progress|done|closed|waiting|acknowledged|new|rejected|archived|IN_PROGRESS|DONE|CLOSED|WAITING|ACKNOWLEDGED|NEW|REJECTED|ARCHIVED)\b/gi, (match) => {
+    return statusTranslations[match] ?? match;
+  });
+}
+
 export const equipmentStatusOptions = Object.entries(equipmentStatusLabels).map(
   ([value, label]) => ({ value: value as EquipmentStatus, label }),
 );
