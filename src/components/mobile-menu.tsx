@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { createPortal } from "react-dom";
 import { logoutAction } from "@/app/actions";
+import { QrScanner } from "@/components/qr-scanner";
 import { roleLabels } from "@/lib/labels";
 
 type MobileMenuProps = {
@@ -80,6 +81,10 @@ export function MobileMenu({ user }: MobileMenuProps) {
               <button type="button" onClick={() => setOpen(false)} className="rounded-lg p-1.5 hover:bg-white/10 transition">
                 <X className="h-5 w-5 text-indigo-200" />
               </button>
+            </div>
+
+            <div className="px-1 mb-3">
+              <QrScanner />
             </div>
 
             <div className="space-y-1 flex-1 overflow-y-auto">

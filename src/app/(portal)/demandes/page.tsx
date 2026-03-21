@@ -2,6 +2,7 @@ import { RequestStatus } from "@prisma/client";
 import { AlertCircle, ChevronLeft, ChevronRight, Download, LayoutGrid, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { QrScanner } from "@/components/qr-scanner";
 import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/db";
 import { requestIssueTypeLabels, requestStatusOptions } from "@/lib/labels";
@@ -90,10 +91,13 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
               </Link>
             </div>
           ) : (
-            <Link href="/equipements" className="primary-button gap-2">
-              <AlertCircle className="h-4 w-4" />
-              Effectuer une demande
-            </Link>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/equipements" className="primary-button gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Effectuer une demande
+              </Link>
+              <QrScanner />
+            </div>
           )
         }
       />
