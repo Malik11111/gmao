@@ -31,8 +31,7 @@ function generateQrGrid(size: number): boolean[][] {
   }
 
   // Random data modules
-  const seed = 42;
-  let rng = seed;
+  let rng = 42;
   const pseudoRandom = () => {
     rng = (rng * 16807 + 0) % 2147483647;
     return rng / 2147483647;
@@ -41,7 +40,6 @@ function generateQrGrid(size: number): boolean[][] {
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
       if (grid[y][x]) continue;
-      // Skip finder pattern areas + separators
       const inFinder1 = x <= 7 && y <= 7;
       const inFinder2 = x >= size - 8 && y <= 7;
       const inFinder3 = x <= 7 && y >= size - 8;
@@ -62,8 +60,13 @@ export function QrParticles() {
 
     // Scene setup
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.set(0, 0, 18);
+    const camera = new THREE.PerspectiveCamera(
+      45,
+      container.clientWidth / container.clientHeight,
+      0.1,
+      100,
+    );
+    camera.position.set(0, 0, 17);
 
     const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true });
     renderer.setSize(container.clientWidth, container.clientHeight);
@@ -74,8 +77,51 @@ export function QrParticles() {
     const QR_SIZE = 21;
     const grid = generateQrGrid(QR_SIZE);
 
-    // Create particles
-    const particles: {
+    // Create small cubes using InstancedMesh for performance
+    const cubeSize = 0.22;
+    const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize * 0.3);
+    const cubeMaterial = new THREE.MeshPhongMaterial({
+      emissive: 0x818cf8,
+      emissiveIntensity: 0.6,
+      transparent: true,
+      opacity: 0.7,
+      shininess: 60,
+    });
+
+    // Count active cells
+    const cells: { row: number; col: number }[] = [];
+    for (let row = 0; row < QR_SIZE; row++) {
+      for (let col = 0; col < QR_SIZE; col++) {
+        if (grid[row][col]) cells.push({ row, col });
+      }
+    }
+
+    const count = cells.length;
+    const mesh = new THREE.InstancedMesh(cubeGeometry, cubeMaterial, count);
+    mesh.position.set(5, 3.5, 0); // Offset to top-right
+    scene.add(mesh);
+
+    // Lighting
+    const ambientLight = new THREE.AmbientLight(0x6366f1, 0.4);
+    scene.add(ambientLight);
+
+    const pointLight = new THREE.PointLight(0x818cf8, 1, 30);
+    pointLight.position.set(3, 3, 8);
+    scene.add(pointLight);
+
+    const pointLight2 = new THREE.PointLight(0xa78bfa, 0.6, 25);
+    pointLight2.position.set(-3, -2, 6);
+    scene.add(pointLight2);
+
+    // Calculate positions
+    const spacing = 0.27;
+    const offset = (QR_SIZE * spacing) / 2;
+    const dummy = new THREE.Object3D();
+
+    // Gradient colors for each cube
+    const gradientColors: THREE.Color[] = [];
+
+    interface ParticleData {
       targetX: number;
       targetY: number;
       targetZ: number;
@@ -83,107 +129,59 @@ export function QrParticles() {
       startY: number;
       startZ: number;
       delay: number;
-    }[] = [];
-
-    const spacing = 0.38;
-    const offset = (QR_SIZE * spacing) / 2;
-
-    for (let row = 0; row < QR_SIZE; row++) {
-      for (let col = 0; col < QR_SIZE; col++) {
-        if (!grid[row][col]) continue;
-        const tx = col * spacing - offset;
-        const ty = -(row * spacing - offset);
-        const tz = 0;
-
-        // Random start position (scattered)
-        const angle = Math.random() * Math.PI * 2;
-        const radius = 6 + Math.random() * 8;
-        const sx = Math.cos(angle) * radius;
-        const sy = Math.sin(angle) * radius;
-        const sz = (Math.random() - 0.5) * 10;
-
-        // Distance from center for staggered delay
-        const dist = Math.sqrt(tx * tx + ty * ty);
-        const delay = dist * 0.12 + Math.random() * 0.3;
-
-        particles.push({ targetX: tx, targetY: ty, targetZ: tz, startX: sx, startY: sy, startZ: sz, delay });
-      }
     }
 
-    // Geometry
-    const count = particles.length;
-    const geometry = new THREE.BufferGeometry();
-    const positions = new Float32Array(count * 3);
-    const colors = new Float32Array(count * 3);
-    const sizes = new Float32Array(count);
+    const particles: ParticleData[] = [];
 
-    // Initial positions (scattered)
     for (let i = 0; i < count; i++) {
-      positions[i * 3] = particles[i].startX;
-      positions[i * 3 + 1] = particles[i].startY;
-      positions[i * 3 + 2] = particles[i].startZ;
+      const { row, col } = cells[i];
+      const tx = col * spacing - offset;
+      const ty = -(row * spacing - offset);
 
-      // Indigo/violet color palette
-      const hue = 0.7 + Math.random() * 0.1; // 0.7-0.8 range (indigo to violet)
-      const color = new THREE.Color().setHSL(hue, 0.8, 0.65);
-      colors[i * 3] = color.r;
-      colors[i * 3 + 1] = color.g;
-      colors[i * 3 + 2] = color.b;
+      // Gradient: top-left = cyan/blue, bottom-right = violet/purple
+      const t = (col + row) / (QR_SIZE * 2);
+      const color = new THREE.Color().setHSL(0.6 + t * 0.1, 0.6, 0.75 + t * 0.1);
+      gradientColors.push(color);
 
-      sizes[i] = 2.5 + Math.random() * 1.5;
+      // Random scattered start position
+      const angle = Math.random() * Math.PI * 2;
+      const radius = 5 + Math.random() * 7;
+      const sx = Math.cos(angle) * radius;
+      const sy = Math.sin(angle) * radius;
+      const sz = (Math.random() - 0.5) * 8;
+
+      const dist = Math.sqrt(tx * tx + ty * ty);
+      const delay = dist * 0.1 + Math.random() * 0.25;
+
+      particles.push({
+        targetX: tx,
+        targetY: ty,
+        targetZ: 0,
+        startX: sx,
+        startY: sy,
+        startZ: sz,
+        delay,
+      });
     }
 
-    geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
-    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
-    geometry.setAttribute("size", new THREE.BufferAttribute(sizes, 1));
-
-    // Shader material for round glowing particles
-    const material = new THREE.ShaderMaterial({
-      uniforms: {
-        uPixelRatio: { value: renderer.getPixelRatio() },
-      },
-      vertexShader: `
-        attribute float size;
-        varying vec3 vColor;
-        uniform float uPixelRatio;
-        void main() {
-          vColor = color;
-          vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-          gl_PointSize = size * uPixelRatio * (8.0 / -mvPosition.z);
-          gl_Position = projectionMatrix * mvPosition;
-        }
-      `,
-      fragmentShader: `
-        varying vec3 vColor;
-        void main() {
-          float d = length(gl_PointCoord - vec2(0.5));
-          if (d > 0.5) discard;
-          float alpha = 1.0 - smoothstep(0.2, 0.5, d);
-          gl_FragColor = vec4(vColor, alpha * 0.9);
-        }
-      `,
-      vertexColors: true,
-      transparent: true,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-
-    const points = new THREE.Points(geometry, material);
-    scene.add(points);
+    // Apply gradient colors per instance
+    for (let i = 0; i < count; i++) {
+      mesh.setColorAt(i, gradientColors[i]);
+    }
+    if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
     // Animation state
-    const FORM_DURATION = 3.0; // seconds to form QR
-    const HOLD_DURATION = 4.0; // seconds to hold formed
-    const SCATTER_DURATION = 2.0; // seconds to scatter
-    const SCATTER_HOLD = 1.5; // seconds to stay scattered
-    const TOTAL_CYCLE = FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
+    const FORM_DURATION = 3.0;
+    const HOLD_DURATION = 5.0;
+    const SCATTER_DURATION = 2.0;
+    const SCATTER_HOLD = 1.5;
+    const TOTAL_CYCLE =
+      FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
 
     let time = 0;
     let animationId: number;
-
     const clock = new THREE.Clock();
 
-    // Easing
     const easeInOutCubic = (t: number) =>
       t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
@@ -193,7 +191,6 @@ export function QrParticles() {
       time += delta;
 
       const cycleTime = time % TOTAL_CYCLE;
-      const posAttr = geometry.getAttribute("position") as THREE.BufferAttribute;
 
       for (let i = 0; i < count; i++) {
         const p = particles[i];
@@ -201,39 +198,55 @@ export function QrParticles() {
         let progress: number;
 
         if (cycleTime < FORM_DURATION) {
-          // Forming phase
-          const t = Math.max(0, (cycleTime - p.delay) / (FORM_DURATION - p.delay - 0.2));
+          const t = Math.max(
+            0,
+            (cycleTime - p.delay) / (FORM_DURATION - p.delay - 0.2),
+          );
           progress = easeInOutCubic(Math.min(1, Math.max(0, t)));
         } else if (cycleTime < FORM_DURATION + HOLD_DURATION) {
-          // Hold formed
           progress = 1;
-        } else if (cycleTime < FORM_DURATION + HOLD_DURATION + SCATTER_DURATION) {
-          // Scattering phase
-          const t = (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION;
-          const delayed = Math.max(0, (t - p.delay * 0.08));
+        } else if (
+          cycleTime <
+          FORM_DURATION + HOLD_DURATION + SCATTER_DURATION
+        ) {
+          const t =
+            (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION;
+          const delayed = Math.max(0, t - p.delay * 0.08);
           progress = 1 - easeInOutCubic(Math.min(1, delayed * 1.5));
         } else {
-          // Hold scattered
           progress = 0;
         }
 
-        posAttr.setXYZ(
-          i,
-          p.startX + (p.targetX - p.startX) * progress,
-          p.startY + (p.targetY - p.startY) * progress,
-          p.startZ + (p.targetZ - p.startZ) * progress,
+        const x = p.startX + (p.targetX - p.startX) * progress;
+        const y = p.startY + (p.targetY - p.startY) * progress;
+        const z = p.startZ + (p.targetZ - p.startZ) * progress;
+
+        dummy.position.set(x, y, z);
+
+        // Slight rotation when scattered, aligned when formed
+        dummy.rotation.set(
+          (1 - progress) * Math.sin(time + i) * 0.5,
+          (1 - progress) * Math.cos(time + i * 0.7) * 0.5,
+          0,
         );
+        dummy.scale.setScalar(0.7 + progress * 0.3);
+        dummy.updateMatrix();
+        mesh.setMatrixAt(i, dummy.matrix);
       }
+      mesh.instanceMatrix.needsUpdate = true;
 
-      posAttr.needsUpdate = true;
+      // Gentle rotation of the whole QR when formed
+      const formProgress =
+        cycleTime < FORM_DURATION + HOLD_DURATION
+          ? Math.min(1, cycleTime / FORM_DURATION)
+          : Math.max(
+              0,
+              1 -
+                (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION,
+            );
 
-      // Slow gentle rotation when formed
-      const formProgress = cycleTime < FORM_DURATION + HOLD_DURATION
-        ? Math.min(1, cycleTime / FORM_DURATION)
-        : Math.max(0, 1 - (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION);
-
-      points.rotation.y = Math.sin(time * 0.15) * 0.15 * formProgress;
-      points.rotation.x = Math.sin(time * 0.1) * 0.08 * formProgress;
+      mesh.rotation.y = Math.sin(time * 0.15) * 0.2 * formProgress;
+      mesh.rotation.x = Math.sin(time * 0.1) * 0.1 * formProgress;
 
       renderer.render(scene, camera);
     };
@@ -253,8 +266,8 @@ export function QrParticles() {
       cancelAnimationFrame(animationId);
       window.removeEventListener("resize", onResize);
       renderer.dispose();
-      geometry.dispose();
-      material.dispose();
+      cubeGeometry.dispose();
+      cubeMaterial.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
@@ -262,10 +275,6 @@ export function QrParticles() {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="absolute inset-0 z-0"
-      aria-hidden="true"
-    />
+    <div ref={containerRef} className="absolute inset-0 z-0" aria-hidden="true" />
   );
 }
