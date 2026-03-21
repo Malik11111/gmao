@@ -1,6 +1,7 @@
 import { ArrowRight, KeyRound, ScanLine, Shield, Wrench } from "lucide-react";
 import { redirect } from "next/navigation";
 import { loginAction } from "@/app/actions";
+import { QrParticles } from "@/components/qr-particles";
 import { getSessionUser } from "@/lib/session";
 
 type LoginPageProps = {
@@ -22,12 +23,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
     <div className="min-h-screen flex">
       {/* Left panel - branding */}
       <div className="hidden lg:flex lg:w-[55%] relative bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 text-white flex-col justify-between p-12 overflow-hidden">
-        {/* Background pattern */}
-        <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-20 left-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
-          <div className="absolute bottom-20 right-10 h-96 w-96 rounded-full bg-violet-400/20 blur-3xl" />
-          <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-64 w-64 rounded-full bg-indigo-300/10 blur-2xl" />
-        </div>
+        {/* 3D QR code particle animation */}
+        <QrParticles />
 
         <div className="relative z-10">
           <div className="flex items-center gap-3">
