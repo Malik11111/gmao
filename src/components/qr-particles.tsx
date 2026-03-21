@@ -171,10 +171,10 @@ export function QrParticles() {
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
     // Animation state
-    const FORM_DURATION = 3.0;
-    const HOLD_DURATION = 5.0;
-    const SCATTER_DURATION = 2.0;
-    const SCATTER_HOLD = 1.5;
+    const FORM_DURATION = 4.5;
+    const HOLD_DURATION = 8.0;
+    const SCATTER_DURATION = 3.0;
+    const SCATTER_HOLD = 2.5;
     const TOTAL_CYCLE =
       FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
 
