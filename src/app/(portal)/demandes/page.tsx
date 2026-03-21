@@ -92,11 +92,11 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
             </div>
           ) : (
             <div className="flex flex-wrap gap-2">
-              <Link href="/equipements" className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-950 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-950/30 transition hover:bg-indigo-900">
+              <QrScanner />
+              <Link href="/equipements" className="inline-flex items-center justify-center gap-2 rounded-lg border border-indigo-200 bg-white px-4 py-2.5 text-sm font-semibold text-indigo-700 shadow-sm transition hover:bg-indigo-50">
                 <AlertCircle className="h-4 w-4" />
                 Effectuer une demande
               </Link>
-              <QrScanner />
             </div>
           )
         }
