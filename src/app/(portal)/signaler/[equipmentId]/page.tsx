@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { createRequestAction } from "@/app/actions";
 import { PageHeader } from "@/components/page-header";
 import { prisma } from "@/lib/db";
-import { requestIssueTypeOptions, requestUrgencyOptions } from "@/lib/labels";
+import { requestIssueTypeOptions } from "@/lib/labels";
 import { formatLocation } from "@/lib/utils";
 
 type ReportIssuePageProps = {
@@ -73,11 +73,8 @@ export default async function ReportIssuePage({ params, searchParams }: ReportIs
                 Niveau d&apos;urgence
               </label>
               <select className="field" id="urgency" name="urgency" defaultValue="NORMAL">
-                {requestUrgencyOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                <option value="NORMAL">Normale</option>
+                <option value="URGENT">Urgente</option>
               </select>
             </div>
           </div>
