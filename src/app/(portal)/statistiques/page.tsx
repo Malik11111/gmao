@@ -162,7 +162,7 @@ export default async function StatistiquesPage() {
               <p className="text-xs text-gray-400 mt-0.5 mb-4">Signalements sans equipement - 7 derniers jours</p>
             </div>
             <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
-              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-indigo-500" />Total</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-indigo-500" />Normale</span>
               <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-red-500" />Urgente</span>
             </div>
           </div>
