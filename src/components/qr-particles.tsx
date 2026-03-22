@@ -81,11 +81,11 @@ export function QrParticles() {
     const cubeSize = 0.22;
     const cubeGeometry = new THREE.BoxGeometry(cubeSize, cubeSize, cubeSize * 0.3);
     const cubeMaterial = new THREE.MeshPhongMaterial({
-      emissive: 0x818cf8,
-      emissiveIntensity: 0.6,
+      emissive: 0xa5b4fc,
+      emissiveIntensity: 1.2,
       transparent: true,
-      opacity: 0.45,
-      shininess: 60,
+      opacity: 0.9,
+      shininess: 100,
     });
 
     // Count active cells
@@ -141,7 +141,7 @@ export function QrParticles() {
 
       // Gradient: blue to lavender
       const t = (col + row) / (QR_SIZE * 2);
-      const color = new THREE.Color().setHSL(0.6 + t * 0.1, 0.6, 0.75 + t * 0.1);
+      const color = new THREE.Color().setHSL(0.6 + t * 0.1, 0.8, 0.85 + t * 0.08);
       gradientColors.push(color);
 
       // Random scattered start position
@@ -168,7 +168,7 @@ export function QrParticles() {
 
     // Animation state
     const FORM_DURATION = 4.5;
-    const HOLD_DURATION = 8.0;
+    const HOLD_DURATION = 15.0;
     const SCATTER_DURATION = 3.0;
     const SCATTER_HOLD = 2.5;
     const TOTAL_CYCLE =
