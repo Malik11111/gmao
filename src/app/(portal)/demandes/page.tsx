@@ -1,5 +1,5 @@
 import { RequestStatus } from "@prisma/client";
-import { AlertCircle, ChevronLeft, ChevronRight, Download, LayoutGrid, Search } from "lucide-react";
+import { AlertCircle, AlertTriangle, ChevronLeft, ChevronRight, Download, LayoutGrid, Search } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
 import { QrScanner } from "@/components/qr-scanner";
@@ -97,6 +97,10 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
                 <AlertCircle className="h-4 w-4" />
                 Effectuer une demande
               </Link>
+              <Link href="/signaler/anomalie" className="inline-flex items-center justify-center gap-2 rounded-lg border border-orange-200 bg-white px-4 py-2.5 text-sm font-semibold text-orange-600 shadow-sm transition hover:bg-orange-50">
+                <AlertTriangle className="h-4 w-4" />
+                Signaler une anomalie
+              </Link>
             </div>
           )
         }
@@ -144,8 +148,8 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
                 </td>
                 <td className="px-5 py-3.5">
                   <Link href={`/demandes/${request.id}`} className="block">
-                    <p className="font-medium text-slate-900">{request.equipment.name}</p>
-                    <p className="text-xs text-slate-400">{formatLocation(request.equipment.location)}</p>
+                    <p className="font-medium text-slate-900">{request.equipment?.name ?? request.anomalyLabel ?? "Anomalie"}</p>
+                    <p className="text-xs text-slate-400">{request.equipment ? formatLocation(request.equipment.location) : ""}</p>
                   </Link>
                 </td>
                 <td className="px-5 py-3.5 text-slate-600">{requestIssueTypeLabels[request.issueType]}</td>
@@ -177,7 +181,7 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
                 <StatusBadge kind="request" value={request.status} />
                 <StatusBadge kind="urgency" value={request.urgency} />
               </div>
-              <p className="font-semibold text-slate-950 truncate mt-1">{request.equipment.name}</p>
+              <p className="font-semibold text-slate-950 truncate mt-1">{request.equipment?.name ?? request.anomalyLabel ?? "Anomalie"}</p>
               <p className="text-xs text-slate-500 mt-0.5">{requestIssueTypeLabels[request.issueType]} - {formatDateTime(request.updatedAt)}</p>
             </div>
             <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />

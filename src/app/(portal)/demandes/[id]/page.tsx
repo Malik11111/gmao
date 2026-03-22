@@ -68,16 +68,17 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
 
   const canUpdate = canOperateRequests(user.role);
   const photos = readStringArray(request.photos);
-  const category = request.equipment.category;
+  const category = request.equipment?.category ?? null;
   const isExternal = category?.isExternal && category?.contractorEmail;
+  const equipmentLabel = request.equipment?.name ?? request.anomalyLabel ?? "Anomalie";
 
   const mailtoUrl = isExternal
     ? `mailto:${category.contractorEmail}?subject=${encodeURIComponent(
-        `Demande d'intervention ${request.number} - ${request.equipment.name}`
+        `Demande d'intervention ${request.number} - ${equipmentLabel}`
       )}&body=${encodeURIComponent(
         `Bonjour,\n\nNous souhaitons vous signaler un probleme sur l'equipement suivant :\n\n` +
-        `Equipement : ${request.equipment.name}\n` +
-        `Localisation : ${formatLocation(request.equipment.location)}\n` +
+        `Equipement : ${equipmentLabel}\n` +
+        `Localisation : ${request.equipment ? formatLocation(request.equipment.location) : (request.anomalyLabel ?? "")}\n` +
         `Type de probleme : ${requestIssueTypeLabels[request.issueType]}\n` +
         `Urgence : ${request.urgency}\n` +
         `Description : ${request.description}\n\n` +
@@ -90,13 +91,15 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
     <div className="space-y-6">
       <PageHeader
         title={request.number}
-        description={`Suivi detaille de la demande sur ${request.equipment.name}.`}
+        description={`Suivi detaille de la demande sur ${equipmentLabel}.`}
         actions={
           <>
-            <Link href={`/equipements/${request.equipment.id}`} className="secondary-button gap-2">
-              <QrCode className="h-4 w-4" />
-              Fiche equipement
-            </Link>
+            {request.equipment ? (
+              <Link href={`/equipements/${request.equipment.id}`} className="secondary-button gap-2">
+                <QrCode className="h-4 w-4" />
+                Fiche equipement
+              </Link>
+            ) : null}
             <Link href="/demandes" className="secondary-button">
               Retour a la liste
             </Link>
@@ -117,9 +120,9 @@ export default async function RequestDetailPage({ params, searchParams }: Reques
 
             <div className="mt-6 grid gap-4 md:grid-cols-2">
               <div className="rounded-[24px] border border-slate-200 bg-white/85 p-4">
-                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Equipement</p>
-                <p className="mt-2 text-sm font-semibold text-slate-950">{request.equipment.name}</p>
-                <p className="mt-1 text-sm text-slate-600">{formatLocation(request.equipment.location)}</p>
+                <p className="text-xs uppercase tracking-[0.22em] text-slate-500">{request.equipment ? "Equipement" : "Localisation"}</p>
+                <p className="mt-2 text-sm font-semibold text-slate-950">{equipmentLabel}</p>
+                {request.equipment ? <p className="mt-1 text-sm text-slate-600">{formatLocation(request.equipment.location)}</p> : null}
               </div>
               <div className="rounded-[24px] border border-slate-200 bg-white/85 p-4">
                 <p className="text-xs uppercase tracking-[0.22em] text-slate-500">Type de probleme</p>

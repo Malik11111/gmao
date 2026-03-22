@@ -150,8 +150,9 @@ model Equipment {
 model Request {
   id                String           @id @default(cuid())
   number            String           @unique
-  equipmentId       String
-  equipment         Equipment        @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  equipmentId       String?
+  equipment         Equipment?       @relation(fields: [equipmentId], references: [id], onDelete: Cascade)
+  anomalyLabel      String?
   requesterId       String
   requester         User             @relation("RequesterRequests", fields: [requesterId], references: [id], onDelete: Restrict)
   assignedToId      String?

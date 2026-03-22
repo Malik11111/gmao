@@ -296,6 +296,79 @@ export async function createRequestAction(formData: FormData) {
   redirect(withSearchParams(`/demandes/${request.id}`, { success: "Signalement envoye au service technique." }));
 }
 
+export async function createAnomalyAction(formData: FormData) {
+  const user = await requireUser();
+
+  const schema = z.object({
+    anomalyLabel: z.string().min(3, "Decris l'endroit concerne (ex: Couloir Bat. A, RDC)."),
+    issueType: z.string().min(1, "Le type de probleme est requis."),
+    description: z.string().min(8, "Merci de decrire l'anomalie observee."),
+    urgency: z.string().min(1, "Le niveau d'urgence est requis."),
+  });
+
+  const parsed = schema.safeParse({
+    anomalyLabel: getString(formData, "anomalyLabel"),
+    issueType: getString(formData, "issueType"),
+    description: getString(formData, "description"),
+    urgency: getString(formData, "urgency"),
+  });
+
+  if (!parsed.success) {
+    redirect(withSearchParams("/signaler/anomalie", { error: parsed.error.issues[0]?.message }));
+  }
+
+  const photos = await saveUploadedFiles(
+    formData.getAll("photos").filter((file): file is File => file instanceof File),
+    "requests",
+  );
+
+  const requestNumber = await getNextRequestNumber(user.establishmentId);
+  const location = await findOrCreateLocation(formData, user.establishmentId);
+
+  const request = await prisma.request.create({
+    data: {
+      number: requestNumber,
+      equipmentId: undefined,
+      anomalyLabel: parsed.data.anomalyLabel,
+      requesterId: user.id,
+      locationId: location?.id,
+      establishmentId: user.establishmentId,
+      issueType: parsed.data.issueType as never,
+      description: parsed.data.description,
+      urgency: parsed.data.urgency as never,
+      status: RequestStatus.NEW,
+      photos,
+      history: {
+        create: {
+          fromStatus: null,
+          toStatus: RequestStatus.NEW,
+          actorId: user.id,
+          comment: "Signalement d'anomalie libre cree par le personnel.",
+        },
+      },
+    },
+  });
+
+  const managers = await prisma.user.findMany({
+    where: { role: { in: [Role.ADMIN, Role.MANAGER] }, active: true, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },
+    select: { id: true },
+  });
+
+  if (managers.length > 0) {
+    await prisma.notification.createMany({
+      data: managers.map((m) => ({
+        recipientId: m.id,
+        title: "Anomalie signalee par le personnel",
+        message: `${request.number} - ${parsed.data.anomalyLabel}`,
+        link: `/demandes/${request.id}`,
+      })),
+    });
+  }
+
+  revalidatePath("/demandes");
+  redirect(withSearchParams(`/demandes/${request.id}`, { success: "Anomalie signalee au service technique." }));
+}
+
 export async function updateRequestAction(formData: FormData) {
   const actor = await requireUser();
 

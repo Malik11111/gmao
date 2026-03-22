@@ -37,7 +37,7 @@ export default async function KanbanPage() {
       .map((r) => ({
         id: r.id,
         number: r.number,
-        equipmentName: r.equipment.name,
+        equipmentName: r.equipment?.name ?? r.anomalyLabel ?? "Anomalie",
         urgency: r.urgency,
         assignee: r.assignedTo ? `${r.assignedTo.firstName[0]}${r.assignedTo.lastName[0]}` : null,
         assigneeName: r.assignedTo ? `${r.assignedTo.firstName} ${r.assignedTo.lastName}` : "Non assigne",

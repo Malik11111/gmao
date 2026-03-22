@@ -113,8 +113,8 @@ export default async function ArchivesPage({ searchParams }: ArchivesPageProps) 
                 <StatusBadge kind="urgency" value={request.urgency} />
               </div>
               <div>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-950">{request.equipment.name}</h2>
-                <p className="mt-1 text-sm text-slate-600">{formatLocation(request.equipment.location)}</p>
+                <h2 className="text-xl font-semibold tracking-tight text-slate-950">{request.equipment?.name ?? request.anomalyLabel ?? "Anomalie"}</h2>
+                {request.equipment ? <p className="mt-1 text-sm text-slate-600">{formatLocation(request.equipment.location)}</p> : null}
               </div>
               <p className="text-sm leading-6 text-slate-600">{requestIssueTypeLabels[request.issueType]} - {request.description}</p>
               <p className="text-sm text-slate-500">

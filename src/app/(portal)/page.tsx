@@ -113,8 +113,8 @@ export default async function DashboardPage() {
                 </td>
                 <td className="px-5 py-3.5">
                   <Link href={`/demandes/${request.id}`} className="block">
-                    <p className="font-medium text-slate-900">{request.equipment.name}</p>
-                    <p className="text-xs text-slate-400">{formatLocation(request.equipment.location)}</p>
+                    <p className="font-medium text-slate-900">{request.equipment?.name ?? request.anomalyLabel ?? "Anomalie"}</p>
+                    <p className="text-xs text-slate-400">{request.equipment ? formatLocation(request.equipment.location) : ""}</p>
                   </Link>
                 </td>
                 <td className="px-5 py-3.5 text-slate-600">{requestIssueTypeLabels[request.issueType]}</td>
@@ -151,7 +151,7 @@ export default async function DashboardPage() {
                   <StatusBadge kind="request" value={request.status} />
                   <StatusBadge kind="urgency" value={request.urgency} />
                 </div>
-                <p className="font-semibold text-slate-950 truncate mt-1">{request.equipment.name}</p>
+                <p className="font-semibold text-slate-950 truncate mt-1">{request.equipment?.name ?? request.anomalyLabel ?? "Anomalie"}</p>
                 <p className="text-xs text-slate-500 mt-0.5">{requestIssueTypeLabels[request.issueType]} - {formatDateTime(request.createdAt)}</p>
               </div>
               <ChevronRight className="h-4 w-4 text-slate-400 shrink-0" />
