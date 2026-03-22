@@ -84,7 +84,7 @@ export function QrParticles() {
       emissive: 0x818cf8,
       emissiveIntensity: 0.6,
       transparent: true,
-      opacity: 0.7,
+      opacity: 0.45,
       shininess: 60,
     });
 
@@ -98,8 +98,9 @@ export function QrParticles() {
 
     const count = cells.length;
     const mesh = new THREE.InstancedMesh(cubeGeometry, cubeMaterial, count);
-    mesh.position.set(5, 3.5, 0); // Offset to top-right
+    mesh.position.set(5, 3.5, 0); // Top-right
     scene.add(mesh);
+
 
     // Lighting
     const ambientLight = new THREE.AmbientLight(0x6366f1, 0.4);
@@ -138,7 +139,7 @@ export function QrParticles() {
       const tx = col * spacing - offset;
       const ty = -(row * spacing - offset);
 
-      // Gradient: top-left = cyan/blue, bottom-right = violet/purple
+      // Gradient: blue to lavender
       const t = (col + row) / (QR_SIZE * 2);
       const color = new THREE.Color().setHSL(0.6 + t * 0.1, 0.6, 0.75 + t * 0.1);
       gradientColors.push(color);
@@ -154,17 +155,12 @@ export function QrParticles() {
       const delay = dist * 0.1 + Math.random() * 0.25;
 
       particles.push({
-        targetX: tx,
-        targetY: ty,
-        targetZ: 0,
-        startX: sx,
-        startY: sy,
-        startZ: sz,
-        delay,
+        targetX: tx, targetY: ty, targetZ: 0,
+        startX: sx, startY: sy, startZ: sz, delay,
       });
     }
 
-    // Apply gradient colors per instance
+    // Apply gradient colors
     for (let i = 0; i < count; i++) {
       mesh.setColorAt(i, gradientColors[i]);
     }
