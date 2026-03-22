@@ -206,7 +206,7 @@ export default async function EquipmentDetailPage({ params, searchParams }: Equi
             </Link>
           </div>
 
-          {user.role === "ADMIN" ? (
+          {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") ? (
             <div className="panel p-6">
               <p className="text-xs font-semibold uppercase tracking-[0.22em] text-rose-500">Zone dangereuse</p>
               <p className="mt-3 text-sm text-slate-600">La suppression est irreversible et n&apos;est possible que si aucune demande n&apos;est liee.</p>

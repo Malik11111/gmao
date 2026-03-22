@@ -13,7 +13,7 @@ type Props = {
 };
 
 export default async function EditCategoryPage({ params, searchParams }: Props) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   const { id } = await params;
   const sp = await searchParams;
   const error = typeof sp.error === "string" ? sp.error : undefined;

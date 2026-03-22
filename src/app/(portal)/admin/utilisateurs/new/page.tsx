@@ -16,7 +16,7 @@ const roleOptions = [
 ];
 
 export default async function NewUserPage({ searchParams }: NewUserPageProps) {
-  await requireRole([Role.ADMIN]);
+  await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
 

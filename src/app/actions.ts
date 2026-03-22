@@ -106,7 +106,7 @@ export async function logoutAction() {
 }
 
 export async function createEquipmentAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
 
   const schema = z.object({
     name: z.string().min(3, "Le nom de l'equipement est requis."),
@@ -449,7 +449,7 @@ export async function markAllReadAction() {
 }
 
 export async function updateEquipmentAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
 
   const id = getString(formData, "id");
   const equipment = await prisma.equipment.findFirst({ where: { id, ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) } });
@@ -509,7 +509,7 @@ export async function updateEquipmentAction(formData: FormData) {
 }
 
 export async function deleteEquipmentAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
 
   const id = getString(formData, "id");
 
@@ -576,7 +576,7 @@ export async function addCommentAction(formData: FormData) {
 // ===== CATEGORY MANAGEMENT =====
 
 export async function createCategoryAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
 
   const name = getString(formData, "name");
   if (name.length < 2) {
@@ -609,7 +609,7 @@ export async function createCategoryAction(formData: FormData) {
 }
 
 export async function updateCategoryAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   void user;
 
   const id = getString(formData, "id");
@@ -639,7 +639,7 @@ export async function updateCategoryAction(formData: FormData) {
 }
 
 export async function deleteCategoryAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   void user;
 
   const id = getString(formData, "id");
@@ -654,7 +654,7 @@ export async function deleteCategoryAction(formData: FormData) {
 // ===== USER MANAGEMENT =====
 
 export async function createUserAction(formData: FormData) {
-  const currentUser = await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
 
   const schema = z.object({
     firstName: z.string().min(2, "Le prenom est requis."),
@@ -701,7 +701,7 @@ export async function createUserAction(formData: FormData) {
 }
 
 export async function updateUserAction(formData: FormData) {
-  const currentUser = await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   void currentUser;
 
   const id = getString(formData, "id");
@@ -744,7 +744,7 @@ export async function updateUserAction(formData: FormData) {
 }
 
 export async function toggleUserActiveAction(formData: FormData) {
-  const currentUser = await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   void currentUser;
 
   const userId = getString(formData, "userId");
@@ -766,7 +766,7 @@ export async function toggleUserActiveAction(formData: FormData) {
 // ===== MAINTENANCE PREVENTIVE =====
 
 export async function createMaintenancePlanAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
 
   const schema = z.object({
     title: z.string().min(3, "Le titre est requis."),
@@ -802,7 +802,7 @@ export async function createMaintenancePlanAction(formData: FormData) {
 }
 
 export async function toggleMaintenancePlanAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   void user;
 
   const id = getString(formData, "id");
@@ -822,7 +822,7 @@ export async function toggleMaintenancePlanAction(formData: FormData) {
 }
 
 export async function generateMaintenanceAction() {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
 
   const duePlans = await prisma.maintenancePlan.findMany({
     where: {
@@ -893,7 +893,7 @@ export async function generateMaintenanceAction() {
 
 // ===== DELETE ARCHIVED REQUEST =====
 export async function deleteArchivedRequestAction(formData: FormData) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   const requestId = getString(formData, "requestId");
 
   const request = await prisma.request.findFirst({
@@ -920,7 +920,7 @@ export async function deleteArchivedRequestAction(formData: FormData) {
 
 // ===== ARCHIVE NOW (manual) =====
 export async function archiveNowAction() {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
   // Find closed requests to archive
@@ -948,4 +948,78 @@ export async function archiveNowAction() {
   revalidatePath("/demandes");
   revalidatePath("/notifications");
   redirect(`/demandes/archives?success=${archived.count} demande(s) archivee(s), ${deleted.count} notification(s) supprimee(s)`);
+}
+
+// ===== ESTABLISHMENT ACTIONS =====
+
+export async function createEstablishmentAction(formData: FormData) {
+  await requireRole([Role.SUPER_ADMIN]);
+
+  const name = getString(formData, "name");
+  const slug = getString(formData, "slug");
+  const address = formData.get("address") as string || null;
+  const phone = formData.get("phone") as string || null;
+  const email = formData.get("email") as string || null;
+
+  const adminFirstName = formData.get("adminFirstName") as string || "";
+  const adminLastName = formData.get("adminLastName") as string || "";
+  const adminEmail = formData.get("adminEmail") as string || "";
+  const adminPassword = formData.get("adminPassword") as string || "";
+
+  const establishment = await prisma.establishment.create({
+    data: { name, slug, address, phone, email },
+  });
+
+  if (adminEmail && adminPassword && adminFirstName && adminLastName) {
+    const passwordHash = await bcrypt.hash(adminPassword, 10);
+    await prisma.user.create({
+      data: {
+        email: adminEmail.toLowerCase(),
+        passwordHash,
+        firstName: adminFirstName,
+        lastName: adminLastName,
+        role: Role.ADMIN,
+        service: "Direction",
+        establishmentId: establishment.id,
+      },
+    });
+  }
+
+  revalidatePath("/admin/etablissements");
+  redirect("/admin/etablissements");
+}
+
+export async function updateEstablishmentAction(formData: FormData) {
+  await requireRole([Role.SUPER_ADMIN]);
+
+  const id = getString(formData, "establishmentId");
+  const name = getString(formData, "name");
+  const slug = getString(formData, "slug");
+  const address = formData.get("address") as string || null;
+  const phone = formData.get("phone") as string || null;
+  const email = formData.get("email") as string || null;
+  const active = formData.get("active") === "true";
+
+  await prisma.establishment.update({
+    where: { id },
+    data: { name, slug, address, phone, email, active },
+  });
+
+  revalidatePath("/admin/etablissements");
+  redirect("/admin/etablissements");
+}
+
+export async function toggleEstablishmentActiveAction(formData: FormData) {
+  await requireRole([Role.SUPER_ADMIN]);
+
+  const id = getString(formData, "establishmentId");
+  const establishment = await prisma.establishment.findUniqueOrThrow({ where: { id } });
+
+  await prisma.establishment.update({
+    where: { id },
+    data: { active: !establishment.active },
+  });
+
+  revalidatePath("/admin/etablissements");
+  redirect("/admin/etablissements");
 }

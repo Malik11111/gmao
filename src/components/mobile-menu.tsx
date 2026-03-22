@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, BarChart3, Bell, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Menu, Package, Settings, X } from "lucide-react";
+import { Archive, BarChart3, Bell, Building2, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Menu, Package, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -13,7 +13,7 @@ type MobileMenuProps = {
   user: {
     firstName: string;
     lastName: string;
-    role: "USER" | "TECHNICIAN" | "MANAGER" | "ADMIN";
+    role: "USER" | "TECHNICIAN" | "MANAGER" | "ADMIN" | "SUPER_ADMIN";
     service: string | null;
   };
 };
@@ -49,19 +49,25 @@ const adminLinks: NavLink[] = [
   { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Settings },
 ];
 
+const superAdminLinks: NavLink[] = [
+  { href: "/admin/etablissements", label: "Etablissements", icon: Building2 },
+  { href: "/admin/categories", label: "Categories", icon: FolderCog },
+  { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Settings },
+];
+
 export function MobileMenu({ user }: MobileMenuProps) {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const initials = `${user.firstName[0]}${user.lastName[0]}`;
 
-  const isManager = user.role === "ADMIN" || user.role === "MANAGER";
+  const isManager = user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER";
   const isTech = isManager || user.role === "TECHNICIAN";
 
   const allLinks: NavLink[] = [
     ...(user.role === "USER" ? personnelLinks : baseLinks),
     ...(isTech ? techLinks : []),
     ...(isManager ? managerLinks : []),
-    ...(user.role === "ADMIN" ? adminLinks : []),
+    ...(user.role === "SUPER_ADMIN" ? superAdminLinks : user.role === "ADMIN" ? adminLinks : []),
   ];
 
   return (

@@ -19,7 +19,7 @@ type ArchivesPageProps = {
 export default async function ArchivesPage({ searchParams }: ArchivesPageProps) {
   const user = await requireUser();
 
-  if (user.role !== "ADMIN" && user.role !== "MANAGER") {
+  if (user.role !== "SUPER_ADMIN" && user.role !== "ADMIN" && user.role !== "MANAGER") {
     redirect("/demandes");
   }
 

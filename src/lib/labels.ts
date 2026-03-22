@@ -11,6 +11,7 @@ export const roleLabels: Record<Role, string> = {
   TECHNICIAN: "Technicien",
   MANAGER: "Responsable technique",
   ADMIN: "Administrateur",
+  SUPER_ADMIN: "Super administrateur",
 };
 
 export const equipmentStatusLabels: Record<EquipmentStatus, string> = {

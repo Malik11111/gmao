@@ -11,7 +11,7 @@ type Props = {
 };
 
 export default async function NewCategoryPage({ searchParams }: Props) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
 

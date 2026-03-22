@@ -7,7 +7,7 @@ import { requireRole } from "@/lib/session";
 import { Role } from "@prisma/client";
 
 export default async function CategoriesPage() {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
 
   const categories = await prisma.equipmentCategory.findMany({
     where: { ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}) },

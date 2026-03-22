@@ -12,6 +12,7 @@ enum Role {
   TECHNICIAN
   MANAGER
   ADMIN
+  SUPER_ADMIN
 }
 
 enum EquipmentStatus {

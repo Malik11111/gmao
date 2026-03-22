@@ -130,9 +130,9 @@ export async function authenticateUser(email: string, password: string) {
 }
 
 export function canManageEquipment(role: Role) {
-  return role === "ADMIN" || role === "MANAGER";
+  return role === "SUPER_ADMIN" || role === "ADMIN" || role === "MANAGER";
 }
 
 export function canOperateRequests(role: Role) {
-  return role === "ADMIN" || role === "MANAGER" || role === "TECHNICIAN";
+  return role === "SUPER_ADMIN" || role === "ADMIN" || role === "MANAGER" || role === "TECHNICIAN";
 }

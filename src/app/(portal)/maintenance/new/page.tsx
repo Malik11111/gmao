@@ -10,7 +10,7 @@ type NewPlanPageProps = {
 };
 
 export default async function NewMaintenancePlanPage({ searchParams }: NewPlanPageProps) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
 

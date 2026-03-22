@@ -19,7 +19,7 @@ const roleOptions = [
 ];
 
 export default async function EditUserPage({ params, searchParams }: EditUserPageProps) {
-  await requireRole([Role.ADMIN]);
+  await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   const { id } = await params;
   const qp = await searchParams;
   const error = typeof qp.error === "string" ? qp.error : undefined;

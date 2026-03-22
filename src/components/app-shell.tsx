@@ -1,4 +1,4 @@
-import { Archive, BarChart3, Bell, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Package, Settings, Wrench } from "lucide-react";
+import { Archive, BarChart3, Bell, Building2, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Package, Settings, Wrench } from "lucide-react";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions";
 import { GlobalSearch } from "@/components/global-search";
@@ -11,7 +11,7 @@ type AppShellProps = {
   user: {
     firstName: string;
     lastName: string;
-    role: "USER" | "TECHNICIAN" | "MANAGER" | "ADMIN";
+    role: "USER" | "TECHNICIAN" | "MANAGER" | "ADMIN" | "SUPER_ADMIN";
     service: string | null;
   };
   unreadNotifications: number;
@@ -20,7 +20,7 @@ type AppShellProps = {
 
 export function AppShell({ user, unreadNotifications, children }: AppShellProps) {
   const initials = `${user.firstName[0]}${user.lastName[0]}`;
-  const isManager = user.role === "ADMIN" || user.role === "MANAGER";
+  const isManager = user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER";
   const isTech = isManager || user.role === "TECHNICIAN";
 
   return (
@@ -70,9 +70,12 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
               </>
             ) : null}
 
-            {user.role === "ADMIN" ? (
+            {(user.role === "ADMIN" || user.role === "SUPER_ADMIN") ? (
               <>
                 <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">Administration</p>
+                {user.role === "SUPER_ADMIN" ? (
+                  <NavLink href="/admin/etablissements" icon={<Building2 className="h-4 w-4" />} label="Etablissements" />
+                ) : null}
                 <NavLink href="/admin/categories" icon={<FolderCog className="h-4 w-4" />} label="Categories" />
                 <NavLink href="/admin/utilisateurs" icon={<Settings className="h-4 w-4" />} label="Utilisateurs" />
               </>

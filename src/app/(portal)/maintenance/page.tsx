@@ -12,7 +12,7 @@ type MaintenancePageProps = {
 };
 
 export default async function MaintenancePage({ searchParams }: MaintenancePageProps) {
-  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
   const params = await searchParams;
   const success = typeof params.success === "string" ? params.success : undefined;
 

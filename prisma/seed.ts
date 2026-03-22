@@ -24,6 +24,18 @@ async function main() {
 
   const passwordHash = await bcrypt.hash("demo1234", 10);
 
+  // ===== SUPER ADMIN =====
+  await prisma.user.create({
+    data: {
+      email: "superadmin@gmao.fr",
+      passwordHash,
+      firstName: "Super",
+      lastName: "Admin",
+      role: Role.SUPER_ADMIN,
+      service: "Direction generale",
+    },
+  });
+
   // ===== ESTABLISHMENTS =====
   const [etab1, etab2] = await Promise.all([
     prisma.establishment.create({
@@ -448,6 +460,8 @@ async function main() {
   });
 
   console.log("=== Seed termine ===");
+  console.log("\n--- Super Admin ---");
+  console.log("superadmin@gmao.fr / demo1234 (Super administrateur)");
   console.log("\n--- Etablissement 1 : IME Les Cedres ---");
   console.log({
     comptes: [

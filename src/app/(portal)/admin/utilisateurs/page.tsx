@@ -12,7 +12,7 @@ type UsersPageProps = {
 };
 
 export default async function UsersPage({ searchParams }: UsersPageProps) {
-  const currentUser = await requireRole([Role.ADMIN]);
+  const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   const params = await searchParams;
   const q = typeof params.q === "string" ? params.q : "";
   const success = typeof params.success === "string" ? params.success : undefined;
