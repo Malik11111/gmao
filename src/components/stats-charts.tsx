@@ -1,6 +1,6 @@
 "use client";
 
-import { Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, Cell, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const COLORS = ["#4f46e5", "#059669", "#d97706", "#dc2626", "#8b5cf6", "#0891b2", "#be185d"];
 
@@ -49,6 +49,37 @@ export function CategoryChart({ data }: { data: CategoryData }) {
           </Pie>
           <Tooltip contentStyle={{ borderRadius: "10px", border: "1px solid #e5e7eb", fontSize: "13px" }} />
         </PieChart>
+      </ResponsiveContainer>
+    </div>
+  );
+}
+
+type WeeklyAnomalyData = { day: string; total: number; urgent: number }[];
+
+export function WeeklyAnomalyChart({ data }: { data: WeeklyAnomalyData }) {
+  return (
+    <div className="h-64">
+      <ResponsiveContainer width="100%" height="100%">
+        <AreaChart data={data} margin={{ top: 5, right: 5, bottom: 5, left: -15 }}>
+          <defs>
+            <linearGradient id="colorTotal" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
+            </linearGradient>
+            <linearGradient id="colorUrgent" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="5%" stopColor="#ef4444" stopOpacity={0.2} />
+              <stop offset="95%" stopColor="#ef4444" stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <XAxis dataKey="day" tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} />
+          <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
+          <Tooltip
+            contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", fontSize: "13px" }}
+            formatter={(value: number, name: string) => [value, name === "total" ? "Total" : "Urgente"]}
+          />
+          <Area type="monotone" dataKey="total" name="total" stroke="#6366f1" strokeWidth={2} fill="url(#colorTotal)" dot={{ r: 4, fill: "#6366f1" }} activeDot={{ r: 6 }} />
+          <Area type="monotone" dataKey="urgent" name="urgent" stroke="#ef4444" strokeWidth={2} fill="url(#colorUrgent)" dot={{ r: 4, fill: "#ef4444" }} activeDot={{ r: 6 }} />
+        </AreaChart>
       </ResponsiveContainer>
     </div>
   );

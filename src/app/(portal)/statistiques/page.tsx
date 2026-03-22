@@ -2,7 +2,7 @@ import { Role } from "@prisma/client";
 import { Clock, TrendingUp } from "lucide-react";
 import { PageHeader } from "@/components/page-header";
 import { StatCard } from "@/components/stat-card";
-import { CategoryChart, MonthlyChart, StatusChart } from "@/components/stats-charts";
+import { CategoryChart, MonthlyChart, StatusChart, WeeklyAnomalyChart } from "@/components/stats-charts";
 import { prisma } from "@/lib/db";
 import { requestStatusLabels } from "@/lib/labels";
 import { requireRole } from "@/lib/session";
@@ -24,8 +24,11 @@ export default async function StatistiquesPage() {
 
   const now = new Date();
   const twelveMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const sevenDaysAgo = new Date(now);
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
 
-  const [allRequests, equipmentsByCategory, statusCounts, totalEquipment, totalRequests] = await Promise.all([
+  const [allRequests, equipmentsByCategory, statusCounts, totalEquipment, totalRequests, weeklyAnomalies] = await Promise.all([
     prisma.request.findMany({
       where: { createdAt: { gte: twelveMonthsAgo }, ...estFilter },
       select: { createdAt: true },
@@ -42,6 +45,10 @@ export default async function StatistiquesPage() {
     }),
     prisma.equipment.count({ where: { ...estFilter } }),
     prisma.request.count({ where: { ...estFilter } }),
+    prisma.request.findMany({
+      where: { equipmentId: null, createdAt: { gte: sevenDaysAgo }, ...estFilter },
+      select: { createdAt: true, urgency: true },
+    }),
   ]);
 
   // Monthly data
@@ -82,6 +89,28 @@ export default async function StatistiquesPage() {
       color: STATUS_COLORS[s.status] ?? "#6b7280",
     }))
     .sort((a, b) => b.count - a.count);
+
+  // Weekly anomaly data (last 7 days)
+  const dayNames = ["Dim", "Lun", "Mar", "Mer", "Jeu", "Ven", "Sam"];
+  const weeklyMap = new Map<string, { total: number; urgent: number }>();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const key = d.toISOString().slice(0, 10);
+    weeklyMap.set(key, { total: 0, urgent: 0 });
+  }
+  for (const a of weeklyAnomalies) {
+    const key = new Date(a.createdAt).toISOString().slice(0, 10);
+    if (weeklyMap.has(key)) {
+      const entry = weeklyMap.get(key)!;
+      entry.total += 1;
+      if (a.urgency === "URGENT" || a.urgency === "CRITICAL") entry.urgent += 1;
+    }
+  }
+  const weeklyData = Array.from(weeklyMap.entries()).map(([key, val]) => ({
+    day: dayNames[new Date(key).getDay()],
+    ...val,
+  }));
 
   // Average resolution (requests that reached DONE)
   const doneHistories = await prisma.statusHistory.findMany({
@@ -125,10 +154,26 @@ export default async function StatistiquesPage() {
         </div>
       </section>
 
-      <section className="panel p-6">
-        <h2 className="text-base font-bold text-gray-900">Equipements par categorie</h2>
-        <p className="text-xs text-gray-400 mt-0.5 mb-4">Distribution du parc</p>
-        <CategoryChart data={categoryData} />
+      <section className="grid gap-6 xl:grid-cols-2">
+        <div className="panel p-6">
+          <div className="flex items-center justify-between mb-1">
+            <div>
+              <h2 className="text-base font-bold text-gray-900">Anomalies hebdomadaires</h2>
+              <p className="text-xs text-gray-400 mt-0.5 mb-4">Signalements sans equipement - 7 derniers jours</p>
+            </div>
+            <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-indigo-500" />Total</span>
+              <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-red-500" />Urgente</span>
+            </div>
+          </div>
+          <WeeklyAnomalyChart data={weeklyData} />
+        </div>
+
+        <div className="panel p-6">
+          <h2 className="text-base font-bold text-gray-900">Equipements par categorie</h2>
+          <p className="text-xs text-gray-400 mt-0.5 mb-4">Distribution du parc</p>
+          <CategoryChart data={categoryData} />
+        </div>
       </section>
     </div>
   );

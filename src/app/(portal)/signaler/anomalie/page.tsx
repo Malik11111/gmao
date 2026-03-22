@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { createAnomalyAction } from "@/app/actions";
 import { PageHeader } from "@/components/page-header";
-import { requestIssueTypeOptions, requestUrgencyOptions } from "@/lib/labels";
+import { requestIssueTypeOptions } from "@/lib/labels";
 
 type AnomalyPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -82,11 +82,8 @@ export default async function ReportAnomalyPage({ searchParams }: AnomalyPagePro
                 Niveau d&apos;urgence
               </label>
               <select className="field" id="urgency" name="urgency" defaultValue="NORMAL">
-                {requestUrgencyOptions.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
+                <option value="NORMAL">Normale</option>
+                <option value="URGENT">Urgente</option>
               </select>
             </div>
           </div>
