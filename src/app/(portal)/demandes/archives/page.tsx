@@ -100,39 +100,48 @@ export default async function ArchivesPage({ searchParams }: ArchivesPageProps) 
         </form>
       </section>
 
-      <section className="space-y-4">
-        {requests.map((request) => (
-          <div
-            key={request.id}
-            className="panel p-5 flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between"
-          >
-            <Link href={`/demandes/${request.id}`} className="flex-1 space-y-3 hover:opacity-80 transition">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-sm font-semibold uppercase tracking-[0.22em] text-slate-500">{request.number}</p>
-                <StatusBadge kind="request" value={request.status} />
-                <StatusBadge kind="urgency" value={request.urgency} />
-              </div>
-              <div>
-                <h2 className="text-xl font-semibold tracking-tight text-slate-950">{request.equipment?.name ?? request.anomalyLabel ?? "Anomalie"}</h2>
-                {request.equipment ? <p className="mt-1 text-sm text-slate-600">{formatLocation(request.equipment.location)}</p> : null}
-              </div>
-              <p className="text-sm leading-6 text-slate-600">{requestIssueTypeLabels[request.issueType]} - {request.description}</p>
-              <p className="text-sm text-slate-500">
-                Demandeur : {request.requester.firstName} {request.requester.lastName} | Cloturee le {formatDateTime(request.updatedAt)}
-              </p>
-            </Link>
-            <form action={deleteArchivedRequestAction}>
-              <input type="hidden" name="requestId" value={request.id} />
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 rounded-xl bg-red-500/90 px-4 py-2.5 text-sm font-semibold text-white transition hover:-translate-y-0.5 hover:shadow-lg"
-              >
-                <Trash2 className="h-4 w-4" />
-                Supprimer
-              </button>
-            </form>
-          </div>
-        ))}
+      <section className="panel overflow-hidden">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-100 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <th className="px-4 py-3 text-left">Numéro</th>
+              <th className="px-4 py-3 text-left">Équipement</th>
+              <th className="px-4 py-3 text-left">Type</th>
+              <th className="px-4 py-3 text-left">Urgence</th>
+              <th className="px-4 py-3 text-left">Demandeur</th>
+              <th className="px-4 py-3 text-left">Clôturée le</th>
+              <th className="px-4 py-3 text-right"></th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-100">
+            {requests.map((request) => (
+              <tr key={request.id} className="hover:bg-slate-50 transition">
+                <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                  <Link href={`/demandes/${request.id}`} className="hover:text-indigo-600">{request.number}</Link>
+                </td>
+                <td className="px-4 py-3">
+                  <Link href={`/demandes/${request.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
+                    {request.equipment?.name ?? request.anomalyLabel ?? "Anomalie"}
+                  </Link>
+                  {request.equipment ? <p className="text-xs text-slate-400">{formatLocation(request.equipment.location)}</p> : null}
+                </td>
+                <td className="px-4 py-3 text-slate-600">{requestIssueTypeLabels[request.issueType]}</td>
+                <td className="px-4 py-3"><StatusBadge kind="urgency" value={request.urgency} /></td>
+                <td className="px-4 py-3 text-slate-600">{request.requester.firstName} {request.requester.lastName}</td>
+                <td className="px-4 py-3 text-slate-500">{formatDateTime(request.updatedAt)}</td>
+                <td className="px-4 py-3 text-right">
+                  <form action={deleteArchivedRequestAction}>
+                    <input type="hidden" name="requestId" value={request.id} />
+                    <button type="submit" className="inline-flex items-center gap-1.5 rounded-lg bg-red-500/90 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-600">
+                      <Trash2 className="h-3.5 w-3.5" />
+                      Supprimer
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </section>
 
       {requests.length === 0 ? (
