@@ -43,6 +43,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
 
           {!isSuperAdmin ? (
             <div className="px-4 pb-3">
+              <p className="text-red-500 font-bold">Bonjour</p>
               <QrScanner />
             </div>
           ) : null}
