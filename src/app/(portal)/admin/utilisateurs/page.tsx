@@ -10,6 +10,20 @@ type UsersPageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
+const roleFilterOptions = [
+  { value: "", label: "Tous les roles" },
+  { value: "USER", label: "Personnel" },
+  { value: "TECHNICIAN", label: "Technicien" },
+  { value: "MANAGER", label: "Responsable technique" },
+  { value: "ADMIN", label: "Administrateur" },
+];
+
+const statusFilterOptions = [
+  { value: "", label: "Tous" },
+  { value: "active", label: "Actifs" },
+  { value: "inactive", label: "Inactifs" },
+];
+
 export default async function UsersPage({ searchParams }: UsersPageProps) {
   const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   const params = await searchParams;
@@ -17,8 +31,21 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
   const estFilter = currentUser.establishmentId ? { establishmentId: currentUser.establishmentId } : {};
   const isSA = currentUser.role === "SUPER_ADMIN";
 
+  const roleFilter = typeof params.role === "string" ? params.role : "";
+  const statusFilter = typeof params.status === "string" ? params.status : "";
+  const estFilterParam = typeof params.est === "string" ? params.est : "";
+
+  const establishments = isSA
+    ? await prisma.establishment.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
+    : [];
+
   const users = await prisma.user.findMany({
-    where: { ...estFilter },
+    where: {
+      ...estFilter,
+      ...(roleFilter ? { role: roleFilter as Role } : {}),
+      ...(statusFilter === "active" ? { active: true } : statusFilter === "inactive" ? { active: false } : {}),
+      ...(isSA && estFilterParam ? { establishmentId: estFilterParam } : {}),
+    },
     include: { establishment: isSA ? { select: { name: true } } : false },
     orderBy: [{ role: "asc" }, { lastName: "asc" }],
   });
@@ -34,6 +61,32 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
       </div>
 
       {success ? <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs text-emerald-700">{success}</div> : null}
+
+      {/* Filtres */}
+      <form className="flex flex-wrap items-center gap-2">
+        <select name="role" defaultValue={roleFilter} className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700 outline-none focus:border-indigo-400">
+          {roleFilterOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        <select name="status" defaultValue={statusFilter} className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700 outline-none focus:border-indigo-400">
+          {statusFilterOptions.map((o) => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+        {isSA ? (
+          <select name="est" defaultValue={estFilterParam} className="rounded-lg border border-gray-200 bg-white px-2.5 py-1.5 text-xs text-gray-700 outline-none focus:border-indigo-400">
+            <option value="">Tous les etablissements</option>
+            {establishments.map((e) => (
+              <option key={e.id} value={e.id}>{e.name}</option>
+            ))}
+          </select>
+        ) : null}
+        <button type="submit" className="rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-indigo-700 transition">Filtrer</button>
+        {(roleFilter || statusFilter || estFilterParam) ? (
+          <Link href="/admin/utilisateurs" className="text-xs text-gray-400 hover:text-gray-600 transition">Reinitialiser</Link>
+        ) : null}
+      </form>
 
       <section className="panel overflow-hidden">
         <table className="w-full">
@@ -87,7 +140,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           </tbody>
         </table>
         {users.length === 0 ? (
-          <p className="text-center py-6 text-gray-400 text-xs">Aucun utilisateur</p>
+          <p className="text-center py-6 text-gray-400 text-xs">Aucun utilisateur avec ces filtres</p>
         ) : null}
       </section>
     </div>
