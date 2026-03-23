@@ -46,40 +46,139 @@ function generateQrGrid(size: number): boolean[][] {
   return grid;
 }
 
+const CANVAS_PX = 140;
+const QR_SIZE = 21;
+
+// Couleur violette demandée par l'utilisateur
+const COLOR = "#3d2181";
+
+const FORM_DURATION = 4.5;
+const HOLD_DURATION = 15.0;
+const SCATTER_DURATION = 3.0;
+const SCATTER_HOLD = 2.5;
+const TOTAL_CYCLE = FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
+
+function easeInOutCubic(t: number) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 export function QrMobileSmall() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-
-    const grid = generateQrGrid(21);
-    const SIZE = 21;
-    const CELL = Math.floor(canvas.width / SIZE);
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const grid = generateQrGrid(QR_SIZE);
+    const CELL = CANVAS_PX / QR_SIZE;
 
-    for (let row = 0; row < SIZE; row++) {
-      for (let col = 0; col < SIZE; col++) {
-        if (grid[row][col]) {
-          // Gradient bleu/lavande comme l'animation 3D
-          const t = (col + row) / (SIZE * 2);
-          const lightness = Math.round((55 + t * 12) * 100) / 100;
-          ctx.fillStyle = `hsl(${Math.round(230 + t * 20)}, 70%, ${lightness}%)`;
-          ctx.fillRect(col * CELL + 1, row * CELL + 1, CELL - 1, CELL - 1);
-        }
+    // Collecte les cellules actives
+    const cells: { row: number; col: number }[] = [];
+    for (let row = 0; row < QR_SIZE; row++) {
+      for (let col = 0; col < QR_SIZE; col++) {
+        if (grid[row][col]) cells.push({ row, col });
       }
     }
+
+    // Génère les données de chaque particule
+    const particles = cells.map(({ row, col }) => {
+      const tx = col * CELL + CELL / 2;
+      const ty = row * CELL + CELL / 2;
+
+      // Position de départ éparpillée autour du canvas
+      const angle = Math.random() * Math.PI * 2;
+      const radius = CANVAS_PX * 0.6 + Math.random() * CANVAS_PX * 0.8;
+      const sx = CANVAS_PX / 2 + Math.cos(angle) * radius;
+      const sy = CANVAS_PX / 2 + Math.sin(angle) * radius;
+
+      const dist = Math.sqrt(
+        (tx - CANVAS_PX / 2) ** 2 + (ty - CANVAS_PX / 2) ** 2,
+      );
+      const delay = dist * 0.012 + Math.random() * 0.25;
+
+      return { tx, ty, sx, sy, delay };
+    });
+
+    let startTime: number | null = null;
+    let animId: number;
+
+    const animate = (timestamp: number) => {
+      if (!startTime) startTime = timestamp;
+      const time = (timestamp - startTime) / 1000;
+      const cycleTime = time % TOTAL_CYCLE;
+
+      ctx.clearRect(0, 0, CANVAS_PX, CANVAS_PX);
+
+      // Calcul du progress global pour la rotation douce
+      let formProgress: number;
+      if (cycleTime < FORM_DURATION) {
+        formProgress = Math.min(1, cycleTime / FORM_DURATION);
+      } else if (cycleTime < FORM_DURATION + HOLD_DURATION) {
+        formProgress = 1;
+      } else {
+        formProgress = Math.max(
+          0,
+          1 - (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION,
+        );
+      }
+
+      // Légère rotation du QR quand formé (comme la version 3D)
+      const rotY = Math.sin(time * 0.15) * 0.18 * formProgress;
+      const scaleX = Math.cos(rotY);
+
+      ctx.save();
+      ctx.translate(CANVAS_PX / 2, CANVAS_PX / 2);
+      ctx.scale(scaleX, 1);
+      ctx.translate(-CANVAS_PX / 2, -CANVAS_PX / 2);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+
+        let progress: number;
+        if (cycleTime < FORM_DURATION) {
+          const t = Math.max(
+            0,
+            (cycleTime - p.delay) / (FORM_DURATION - p.delay - 0.2),
+          );
+          progress = easeInOutCubic(Math.min(1, Math.max(0, t)));
+        } else if (cycleTime < FORM_DURATION + HOLD_DURATION) {
+          progress = 1;
+        } else if (cycleTime < FORM_DURATION + HOLD_DURATION + SCATTER_DURATION) {
+          const t =
+            (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION;
+          const delayed = Math.max(0, t - p.delay * 0.08);
+          progress = 1 - easeInOutCubic(Math.min(1, delayed * 1.5));
+        } else {
+          progress = 0;
+        }
+
+        const x = p.sx + (p.tx - p.sx) * progress;
+        const y = p.sy + (p.ty - p.sy) * progress;
+        const size = (CELL - 1) * (0.65 + progress * 0.35);
+
+        ctx.globalAlpha = 0.25 + progress * 0.75;
+        ctx.fillStyle = COLOR;
+        ctx.fillRect(x - size / 2, y - size / 2, size, size);
+      }
+
+      ctx.restore();
+      ctx.globalAlpha = 1;
+
+      animId = requestAnimationFrame(animate);
+    };
+
+    animId = requestAnimationFrame(animate);
+
+    return () => cancelAnimationFrame(animId);
   }, []);
 
   return (
     <canvas
       ref={canvasRef}
-      width={105}
-      height={105}
-      className="opacity-50"
+      width={CANVAS_PX}
+      height={CANVAS_PX}
       aria-hidden="true"
     />
   );
