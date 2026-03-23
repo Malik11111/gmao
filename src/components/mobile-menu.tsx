@@ -98,9 +98,11 @@ export function MobileMenu({ user }: MobileMenuProps) {
               </button>
             </div>
 
-            <div className="px-1 mb-3">
-              <QrScanner />
-            </div>
+            {!isSuperAdmin ? (
+              <div className="px-1 mb-3">
+                <QrScanner />
+              </div>
+            ) : null}
 
             <div className="space-y-1 flex-1 overflow-y-auto">
               {allLinks.map((link) => {

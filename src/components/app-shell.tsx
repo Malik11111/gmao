@@ -41,9 +41,11 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
             </Link>
           </div>
 
-          <div className="px-4 pb-3">
-            <QrScanner />
-          </div>
+          {!isSuperAdmin ? (
+            <div className="px-4 pb-3">
+              <QrScanner />
+            </div>
+          ) : null}
 
           <nav className="flex-1 px-3 py-1 space-y-0.5 overflow-y-auto">
             {!isSuperAdmin ? (
