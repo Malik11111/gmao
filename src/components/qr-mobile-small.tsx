@@ -49,8 +49,8 @@ function generateQrGrid(size: number): boolean[][] {
 const CANVAS_PX = 140;
 const QR_SIZE = 21;
 
-// Couleur violette demandée par l'utilisateur
-const COLOR = "#3d2181";
+// Même couleur que le bouton "Se connecter" (--accent)
+const COLOR = "#4f46e5";
 
 const FORM_DURATION = 4.5;
 const HOLD_DURATION = 15.0;
