@@ -64,7 +64,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
                 <NavLink href="/demandes/kanban" icon={<ClipboardList className="h-4 w-4" />} label="Vue Kanban" />
                 <NavLink href="/statistiques" icon={<BarChart3 className="h-4 w-4" />} label="Statistiques" />
                 {(user.role === "ADMIN" || user.role === "MANAGER") ? (
-                  <NavLink href="/statistiques/analytics" icon={<Brain className="h-4 w-4" />} label="Analytics IA" />
+                  <NavLink href="/statistiques/analytics" icon={<Brain className="h-4 w-4" />} label="Analytics" />
                 ) : null}
               </>
             ) : null}

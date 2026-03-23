@@ -39,7 +39,7 @@ const techLinks: NavLink[] = [
 ];
 
 const managerLinks: NavLink[] = [
-  { href: "/statistiques/analytics", label: "Analytics IA", icon: Brain },
+  { href: "/statistiques/analytics", label: "Analytics", icon: Brain },
   { href: "/maintenance", label: "Maint. preventive", icon: CalendarClock },
   { href: "/maintenance/planning", label: "Planning annuel", icon: Calendar },
   { href: "/demandes/archives", label: "Archives", icon: Archive },

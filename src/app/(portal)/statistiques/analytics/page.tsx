@@ -244,7 +244,7 @@ export default async function AnalyticsPage() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title="Analytics Intelligente"
+        title="Analytics"
         description="Scoring de risque, predictions et indicateurs avances pour la maintenance predictive."
         actions={
           <Link href="/statistiques" className="secondary-button">
