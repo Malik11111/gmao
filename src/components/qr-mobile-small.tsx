@@ -46,7 +46,7 @@ function generateQrGrid(size: number): boolean[][] {
   return grid;
 }
 
-const CANVAS_PX = 140;
+const CANVAS_PX = 168;
 const QR_SIZE = 21;
 
 // Même couleur que le bouton "Se connecter" (--accent)
@@ -87,9 +87,9 @@ export function QrMobileSmall() {
       const tx = col * CELL + CELL / 2;
       const ty = row * CELL + CELL / 2;
 
-      // Position de départ éparpillée autour du canvas
+      // Position de départ éparpillée autour du canvas — vient de plus loin
       const angle = Math.random() * Math.PI * 2;
-      const radius = CANVAS_PX * 0.6 + Math.random() * CANVAS_PX * 0.8;
+      const radius = CANVAS_PX * 1.2 + Math.random() * CANVAS_PX * 1.4;
       const sx = CANVAS_PX / 2 + Math.cos(angle) * radius;
       const sy = CANVAS_PX / 2 + Math.sin(angle) * radius;
 
@@ -156,11 +156,14 @@ export function QrMobileSmall() {
 
         const x = p.sx + (p.tx - p.sx) * progress;
         const y = p.sy + (p.ty - p.sy) * progress;
-        const size = (CELL - 1) * (0.65 + progress * 0.35);
+        const size = CELL * 0.62 * (0.5 + progress * 0.5);
 
-        ctx.globalAlpha = 0.25 + progress * 0.75;
+        ctx.globalAlpha = 0.2 + progress * 0.8;
         ctx.fillStyle = COLOR;
-        ctx.fillRect(x - size / 2, y - size / 2, size, size);
+        const r = size * 0.18;
+        ctx.beginPath();
+        ctx.roundRect(x - size / 2, y - size / 2, size, size, r);
+        ctx.fill();
       }
 
       ctx.restore();
