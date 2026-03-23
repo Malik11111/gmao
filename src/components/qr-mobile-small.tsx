@@ -125,7 +125,16 @@ export function QrMobileSmall() {
       }
 
       // Légère rotation du QR quand formé (comme la version 3D)
-      const rotY = (Math.sin(time * 0.15) * 0.07 - 0.13) * formProgress;
+      // Droit pendant la formation, oscillation douce quand formé
+      let rotY: number;
+      if (cycleTime < FORM_DURATION) {
+        rotY = 0;
+      } else if (cycleTime < FORM_DURATION + HOLD_DURATION) {
+        rotY = Math.sin(time * 0.45) * 0.14;
+      } else {
+        const fadeOut = Math.max(0, 1 - (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION);
+        rotY = Math.sin(time * 0.45) * 0.14 * fadeOut;
+      }
       const scaleX = Math.cos(rotY);
 
       ctx.save();
