@@ -4,6 +4,9 @@ import {
   RequestStatus,
   RequestUrgency,
   Role,
+  TaskStatus,
+  TaskType,
+  TimeSlot,
 } from "@prisma/client";
 
 export const roleLabels: Record<Role, string> = {
@@ -113,4 +116,37 @@ export const requestUrgencyOptions = Object.entries(requestUrgencyLabels).map(
 
 export const requestStatusOptions = Object.entries(requestStatusLabels).map(
   ([value, label]) => ({ value: value as RequestStatus, label }),
+);
+
+export const taskTypeLabels: Record<TaskType, string> = {
+  RONDE: "Ronde",
+  PREVENTIF: "Preventif",
+  TACHE_LIBRE: "Tache libre",
+  ACCOMPAGNEMENT_EXTERNE: "Accomp. externe",
+};
+
+export const taskStatusLabels: Record<TaskStatus, string> = {
+  A_FAIRE: "A faire",
+  EN_COURS: "En cours",
+  FAIT: "Fait",
+};
+
+export const timeSlotLabels: Record<TimeSlot, string> = {
+  MATIN: "Matin",
+  APRES_MIDI: "Apres-midi",
+};
+
+export const taskTypeStyles: Record<TaskType, string> = {
+  RONDE: "bg-emerald-100 text-emerald-700",
+  PREVENTIF: "bg-blue-100 text-blue-700",
+  TACHE_LIBRE: "bg-gray-200 text-gray-700",
+  ACCOMPAGNEMENT_EXTERNE: "bg-yellow-100 text-yellow-700",
+};
+
+export const taskTypeOptions = Object.entries(taskTypeLabels).map(
+  ([value, label]) => ({ value: value as TaskType, label }),
+);
+
+export const timeSlotOptions = Object.entries(timeSlotLabels).map(
+  ([value, label]) => ({ value: value as TimeSlot, label }),
 );

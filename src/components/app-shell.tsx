@@ -1,4 +1,4 @@
-import { Archive, BarChart3, Bell, Brain, Building2, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Package, Settings, Wrench } from "lucide-react";
+import { Archive, BarChart3, Bell, Brain, Building2, Calendar, CalendarCheck, CalendarClock, ClipboardList, FolderCog, Home, Package, Settings, Wrench } from "lucide-react";
 import Link from "next/link";
 import { logoutAction } from "@/app/actions";
 import { GlobalSearch } from "@/components/global-search";
@@ -61,6 +61,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
             {isTech ? (
               <>
                 <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">Technique</p>
+                <NavLink href="/planning/today" icon={<CalendarCheck className="h-4 w-4" />} label="Mon planning" />
                 <NavLink href="/demandes/kanban" icon={<ClipboardList className="h-4 w-4" />} label="Vue Kanban" />
                 <NavLink href="/statistiques" icon={<BarChart3 className="h-4 w-4" />} label="Statistiques" />
                 {(user.role === "ADMIN" || user.role === "MANAGER") ? (
@@ -72,6 +73,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
             {isManager ? (
               <>
                 <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">Gestion</p>
+                <NavLink href="/planning" icon={<CalendarCheck className="h-4 w-4" />} label="Planning" />
                 <NavLink href="/maintenance" icon={<CalendarClock className="h-4 w-4" />} label="Maint. preventive" />
                 <NavLink href="/maintenance/planning" icon={<Calendar className="h-4 w-4" />} label="Planning annuel" />
                 <NavLink href="/demandes/archives" icon={<Archive className="h-4 w-4" />} label="Archives" />

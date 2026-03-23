@@ -49,6 +49,24 @@ enum RequestStatus {
   ARCHIVED
 }
 
+enum TaskType {
+  RONDE
+  PREVENTIF
+  TACHE_LIBRE
+  ACCOMPAGNEMENT_EXTERNE
+}
+
+enum TaskStatus {
+  A_FAIRE
+  EN_COURS
+  FAIT
+}
+
+enum TimeSlot {
+  MATIN
+  APRES_MIDI
+}
+
 model Establishment {
   id               String              @id @default(cuid())
   name             String
@@ -63,6 +81,7 @@ model Establishment {
   categories       EquipmentCategory[]
   requests         Request[]
   maintenancePlans MaintenancePlan[]
+  tasks            Task[]
   createdAt        DateTime            @default(now())
   updatedAt        DateTime            @updatedAt
 }
@@ -85,6 +104,7 @@ model User {
   histories        StatusHistory[]
   notifications    Notification[]
   specialties      EquipmentCategory[] @relation("UserSpecialties")
+  tasks            Task[]
   createdAt        DateTime         @default(now())
   updatedAt        DateTime         @updatedAt
 }
@@ -168,6 +188,8 @@ model Request {
   status            RequestStatus    @default(NEW)
   technicalPriority String?
   dueDate           DateTime?
+  planningDate      DateTime?
+  planningTimeSlot  TimeSlot?
   photos            Json?
   resolutionNotes   String?
   comments          RequestComment[]
@@ -221,6 +243,22 @@ model MaintenancePlan {
   nextDueDate     DateTime
   lastGenerated   DateTime?
   active          Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+}
+
+model Task {
+  id              String         @id @default(cuid())
+  title           String
+  description     String?
+  type            TaskType
+  status          TaskStatus     @default(A_FAIRE)
+  date            DateTime
+  timeSlot        TimeSlot
+  assignedToId    String
+  assignedTo      User           @relation(fields: [assignedToId], references: [id], onDelete: Cascade)
+  establishmentId String?
+  establishment   Establishment? @relation(fields: [establishmentId], references: [id])
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
 }

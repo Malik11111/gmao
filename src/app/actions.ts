@@ -1023,3 +1023,61 @@ export async function toggleEstablishmentActiveAction(formData: FormData) {
   revalidatePath("/admin/etablissements");
   redirect("/admin/etablissements");
 }
+
+/* ── Planning: Tasks ── */
+
+export async function createTaskAction(formData: FormData) {
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
+
+  const title = getString(formData, "title");
+  const type = getString(formData, "type") as "RONDE" | "PREVENTIF" | "TACHE_LIBRE" | "ACCOMPAGNEMENT_EXTERNE";
+  const assignedToId = getString(formData, "assignedToId");
+  const date = getString(formData, "date");
+  const timeSlot = getString(formData, "timeSlot") as "MATIN" | "APRES_MIDI";
+  const description = getOptionalString(formData, "description");
+  const week = getString(formData, "week");
+
+  if (!title || title.length < 2) redirect(`/planning?week=${week}&error=Titre trop court`);
+  if (!assignedToId || !date || !timeSlot) redirect(`/planning?week=${week}&error=Champs manquants`);
+
+  await prisma.task.create({
+    data: {
+      title,
+      type,
+      assignedToId,
+      date: new Date(date),
+      timeSlot,
+      description,
+      establishmentId: user.establishmentId ?? undefined,
+    },
+  });
+
+  await prisma.notification.create({
+    data: {
+      recipientId: assignedToId,
+      title: "Nouvelle tache",
+      message: `Tache assignee : ${title}`,
+      link: "/planning/today",
+    },
+  });
+
+  revalidatePath("/planning");
+  redirect(`/planning?week=${week}`);
+}
+
+export async function updateTaskStatusAction(formData: FormData) {
+  const user = await requireUser();
+  const taskId = getString(formData, "taskId");
+  const status = getString(formData, "status") as "A_FAIRE" | "EN_COURS" | "FAIT";
+
+  const task = await prisma.task.findUniqueOrThrow({ where: { id: taskId } });
+
+  if (user.role === "TECHNICIAN" && task.assignedToId !== user.id) {
+    redirect("/planning/today");
+  }
+
+  await prisma.task.update({ where: { id: taskId }, data: { status } });
+
+  revalidatePath("/planning");
+  revalidatePath("/planning/today");
+}

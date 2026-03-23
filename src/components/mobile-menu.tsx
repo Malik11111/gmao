@@ -1,6 +1,6 @@
 "use client";
 
-import { Archive, BarChart3, Bell, Brain, Building2, Calendar, CalendarClock, ClipboardList, FolderCog, Home, Menu, Package, Settings, X } from "lucide-react";
+import { Archive, BarChart3, Bell, Brain, Building2, Calendar, CalendarCheck, CalendarClock, ClipboardList, FolderCog, Home, Menu, Package, Settings, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
@@ -34,11 +34,13 @@ const personnelLinks: NavLink[] = [
 ];
 
 const techLinks: NavLink[] = [
+  { href: "/planning/today", label: "Mon planning", icon: CalendarCheck },
   { href: "/demandes/kanban", label: "Vue Kanban", icon: ClipboardList },
   { href: "/statistiques", label: "Statistiques", icon: BarChart3 },
 ];
 
 const managerLinks: NavLink[] = [
+  { href: "/planning", label: "Planning", icon: CalendarCheck },
   { href: "/statistiques/analytics", label: "Analytics", icon: Brain },
   { href: "/maintenance", label: "Maint. preventive", icon: CalendarClock },
   { href: "/maintenance/planning", label: "Planning annuel", icon: Calendar },
