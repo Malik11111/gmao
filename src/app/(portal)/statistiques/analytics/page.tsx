@@ -287,7 +287,7 @@ export default async function AnalyticsPage() {
 
       {/* Alertes predictives */}
       {alerts.length > 0 && (
-        <section className="panel p-6">
+        <section className="panel p-4 lg:p-6">
           <div className="flex items-center gap-2 mb-4">
             <Brain className="h-5 w-5 text-indigo-600" />
             <h2 className="text-base font-bold text-gray-900">Alertes predictives</h2>
@@ -308,28 +308,28 @@ export default async function AnalyticsPage() {
 
       {/* Risk scores + Trend */}
       <section className="grid gap-6 xl:grid-cols-2">
-        <div className="panel p-6">
+        <div className="panel p-4 lg:p-6">
           <div className="flex items-center gap-2 mb-1">
             <Gauge className="h-5 w-5 text-red-500" />
             <h2 className="text-base font-bold text-gray-900">Score de risque par equipement</h2>
           </div>
           <p className="text-xs text-gray-400 mb-4">Base sur: frequence, pannes recentes, criticite, temps de resolution</p>
           <RiskScoreChart data={riskData} />
-          <div className="flex items-center gap-4 mt-4 text-[11px] text-gray-500">
+          <div className="flex flex-wrap items-center gap-2 lg:gap-4 mt-4 text-[11px] text-gray-500">
             <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-red-600" />Critique (&ge;70)</span>
             <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-amber-500" />Moyen (40-69)</span>
             <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-emerald-600" />Faible (&lt;40)</span>
           </div>
         </div>
 
-        <div className="panel p-6">
+        <div className="panel p-4 lg:p-6">
           <div className="flex items-center gap-2 mb-1">
             <TrendingUp className="h-5 w-5 text-indigo-600" />
             <h2 className="text-base font-bold text-gray-900">Tendance & Prediction</h2>
           </div>
           <p className="text-xs text-gray-400 mb-4">12 derniers mois + 3 mois de prediction (regression lineaire)</p>
           <TrendPredictionChart data={trendData} />
-          <div className="flex items-center gap-4 mt-3 text-[11px] text-gray-500">
+          <div className="flex flex-wrap items-center gap-2 lg:gap-4 mt-3 text-[11px] text-gray-500">
             <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-indigo-600" />Reel</span>
             <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-amber-500" />Prediction</span>
             {slope > 0 ? (
@@ -347,13 +347,13 @@ export default async function AnalyticsPage() {
 
       {/* Resolution time + Seasonal */}
       <section className="grid gap-6 xl:grid-cols-2">
-        <div className="panel p-6">
+        <div className="panel p-4 lg:p-6">
           <h2 className="text-base font-bold text-gray-900">Temps moyen de resolution</h2>
           <p className="text-xs text-gray-400 mt-0.5 mb-4">Par equipement (jours)</p>
           <ResolutionTimeChart data={resolutionByEq} />
         </div>
 
-        <div className="panel p-6">
+        <div className="panel p-4 lg:p-6">
           <h2 className="text-base font-bold text-gray-900">Saisonnalite des pannes</h2>
           <p className="text-xs text-gray-400 mt-0.5 mb-4">Repartition par mois (toutes les annees confondues)</p>
           <SeasonalChart data={seasonalData} />
@@ -361,7 +361,7 @@ export default async function AnalyticsPage() {
       </section>
 
       {/* MTBF */}
-      <section className="panel p-6">
+      <section className="panel p-4 lg:p-6">
         <h2 className="text-base font-bold text-gray-900">MTBF — Temps moyen entre pannes</h2>
         <p className="text-xs text-gray-400 mt-0.5 mb-4">Evolution sur 12 mois (jours entre pannes par equipement)</p>
         <MtbfChart data={mtbfData} />

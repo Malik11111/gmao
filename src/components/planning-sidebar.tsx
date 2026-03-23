@@ -28,8 +28,8 @@ export function PlanningSidebar({ requests }: { requests: SidebarRequest[] }) {
   };
 
   return (
-    <div className="w-56 shrink-0">
-      <div className="panel p-3 sticky top-20">
+    <div className="w-full lg:w-56 shrink-0">
+      <div className="panel p-3 lg:sticky lg:top-20">
         <div className="flex items-center justify-between mb-2">
           <h3 className="text-xs font-bold text-gray-700">En attente</h3>
           <span className="text-[10px] bg-indigo-100 text-indigo-700 rounded-full px-1.5 py-0.5 font-bold">{requests.length}</span>

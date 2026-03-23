@@ -143,7 +143,7 @@ export default async function PlanningPage({ searchParams }: Props) {
       </div>
 
       {/* Grid + Sidebar */}
-      <div className="flex gap-4">
+      <div className="flex flex-col lg:flex-row gap-4">
         <div className="flex-1 panel p-2 overflow-hidden">
           {technicians.length === 0 ? (
             <p className="text-sm text-gray-400 p-4 text-center">Aucun technicien actif</p>

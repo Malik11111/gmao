@@ -79,8 +79,8 @@ export function PlanningGrid({ technicians, days, dayLabels, items }: Props) {
   };
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full border-collapse text-xs">
+    <div className="overflow-x-auto -mx-2 px-2 pb-2">
+      <table className="w-full border-collapse text-xs min-w-[600px]">
         <thead>
           <tr className="bg-gray-50">
             <th className="border border-gray-100 p-1 text-left font-semibold text-gray-600 w-28 sticky left-0 bg-gray-50 z-10">Technicien</th>

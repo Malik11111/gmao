@@ -141,13 +141,13 @@ export default async function StatistiquesPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
-        <div className="panel p-6">
+        <div className="panel p-4 lg:p-6">
           <h2 className="text-base font-bold text-gray-900">Demandes par mois</h2>
           <p className="text-xs text-gray-400 mt-0.5 mb-4">Evolution sur 12 mois</p>
           <MonthlyChart data={monthlyData} />
         </div>
 
-        <div className="panel p-6">
+        <div className="panel p-4 lg:p-6">
           <h2 className="text-base font-bold text-gray-900">Repartition par statut</h2>
           <p className="text-xs text-gray-400 mt-0.5 mb-4">Toutes les demandes</p>
           <StatusChart data={statusData} />
@@ -155,13 +155,13 @@ export default async function StatistiquesPage() {
       </section>
 
       <section className="grid gap-6 xl:grid-cols-2">
-        <div className="panel p-6">
-          <div className="flex items-center justify-between mb-1">
+        <div className="panel p-4 lg:p-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
             <div>
               <h2 className="text-base font-bold text-gray-900">Anomalies hebdomadaires</h2>
               <p className="text-xs text-gray-400 mt-0.5 mb-4">Signalements sans equipement - 7 derniers jours</p>
             </div>
-            <div className="flex items-center gap-4 text-xs text-gray-500 mb-4">
+            <div className="flex flex-wrap items-center gap-2 lg:gap-4 text-xs text-gray-500 mb-4">
               <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-indigo-500" />Normale</span>
               <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-red-500" />Urgente</span>
             </div>
@@ -169,7 +169,7 @@ export default async function StatistiquesPage() {
           <WeeklyAnomalyChart data={weeklyData} />
         </div>
 
-        <div className="panel p-6">
+        <div className="panel p-4 lg:p-6">
           <h2 className="text-base font-bold text-gray-900">Equipements par categorie</h2>
           <p className="text-xs text-gray-400 mt-0.5 mb-4">Distribution du parc</p>
           <CategoryChart data={categoryData} />
