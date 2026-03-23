@@ -18,6 +18,11 @@ export default async function DashboardPage() {
     redirect("/demandes");
   }
 
+  // SUPER_ADMIN → redirigé vers la gestion des établissements
+  if (user.role === "SUPER_ADMIN") {
+    redirect("/admin/etablissements");
+  }
+
   const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
   const techFilter = user.role === "TECHNICIAN" ? { assignedToId: user.id } : {};
 

@@ -46,12 +46,12 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
           </div>
 
           <nav className="flex-1 px-3 py-1 space-y-0.5 overflow-y-auto">
-            <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">General</p>
-            {user.role !== "USER" ? (
-              <NavLink href="/" icon={<Home className="h-4 w-4" />} label="Tableau de bord" />
-            ) : null}
             {!isSuperAdmin ? (
               <>
+                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">General</p>
+                {user.role !== "USER" ? (
+                  <NavLink href="/" icon={<Home className="h-4 w-4" />} label="Tableau de bord" />
+                ) : null}
                 <NavLink href="/equipements" icon={<Package className="h-4 w-4" />} label="Equipements" />
                 <NavLink href="/demandes" icon={<ClipboardList className="h-4 w-4" />} label="Demandes" />
                 <NavLink href="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" badge={unreadNotifications > 0 ? unreadNotifications : undefined} />

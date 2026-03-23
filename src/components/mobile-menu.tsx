@@ -68,7 +68,6 @@ export function MobileMenu({ user }: MobileMenuProps) {
   const isTech = isManager || user.role === "TECHNICIAN";
 
   const superAdminAllLinks: NavLink[] = [
-    { href: "/", label: "Tableau de bord", icon: Home },
     ...superAdminLinks,
   ];
 
