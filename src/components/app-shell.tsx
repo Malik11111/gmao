@@ -20,7 +20,8 @@ type AppShellProps = {
 
 export function AppShell({ user, unreadNotifications, children }: AppShellProps) {
   const initials = `${user.firstName[0]}${user.lastName[0]}`;
-  const isManager = user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER";
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+  const isManager = user.role === "ADMIN" || user.role === "MANAGER";
   const isTech = isManager || user.role === "TECHNICIAN";
 
   return (
@@ -49,16 +50,20 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
             {user.role !== "USER" ? (
               <NavLink href="/" icon={<Home className="h-4 w-4" />} label="Tableau de bord" />
             ) : null}
-            <NavLink href="/equipements" icon={<Package className="h-4 w-4" />} label="Equipements" />
-            <NavLink href="/demandes" icon={<ClipboardList className="h-4 w-4" />} label="Demandes" />
-            <NavLink href="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" badge={unreadNotifications > 0 ? unreadNotifications : undefined} />
+            {!isSuperAdmin ? (
+              <>
+                <NavLink href="/equipements" icon={<Package className="h-4 w-4" />} label="Equipements" />
+                <NavLink href="/demandes" icon={<ClipboardList className="h-4 w-4" />} label="Demandes" />
+                <NavLink href="/notifications" icon={<Bell className="h-4 w-4" />} label="Notifications" badge={unreadNotifications > 0 ? unreadNotifications : undefined} />
+              </>
+            ) : null}
 
             {isTech ? (
               <>
                 <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">Technique</p>
                 <NavLink href="/demandes/kanban" icon={<ClipboardList className="h-4 w-4" />} label="Vue Kanban" />
                 <NavLink href="/statistiques" icon={<BarChart3 className="h-4 w-4" />} label="Statistiques" />
-                {isManager ? (
+                {(user.role === "ADMIN" || user.role === "MANAGER") ? (
                   <NavLink href="/statistiques/analytics" icon={<Brain className="h-4 w-4" />} label="Analytics IA" />
                 ) : null}
               </>

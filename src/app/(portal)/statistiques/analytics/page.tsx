@@ -30,7 +30,7 @@ function linearRegression(points: number[]): { slope: number; intercept: number 
 }
 
 export default async function AnalyticsPage() {
-  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER]);
   const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
   const now = new Date();

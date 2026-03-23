@@ -19,7 +19,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default async function StatistiquesPage() {
-  const user = await requireRole([Role.SUPER_ADMIN, Role.ADMIN, Role.MANAGER, Role.TECHNICIAN]);
+  const user = await requireRole([Role.ADMIN, Role.MANAGER, Role.TECHNICIAN]);
   const estFilter = user.establishmentId ? { establishmentId: user.establishmentId } : {};
 
   const now = new Date();

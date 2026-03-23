@@ -61,15 +61,23 @@ export function MobileMenu({ user }: MobileMenuProps) {
   const pathname = usePathname();
   const initials = `${user.firstName[0]}${user.lastName[0]}`;
 
-  const isManager = user.role === "SUPER_ADMIN" || user.role === "ADMIN" || user.role === "MANAGER";
+  const isSuperAdmin = user.role === "SUPER_ADMIN";
+  const isManager = user.role === "ADMIN" || user.role === "MANAGER";
   const isTech = isManager || user.role === "TECHNICIAN";
 
-  const allLinks: NavLink[] = [
-    ...(user.role === "USER" ? personnelLinks : baseLinks),
-    ...(isTech ? techLinks : []),
-    ...(isManager ? managerLinks : []),
-    ...(user.role === "SUPER_ADMIN" ? superAdminLinks : user.role === "ADMIN" ? adminLinks : []),
+  const superAdminAllLinks: NavLink[] = [
+    { href: "/", label: "Tableau de bord", icon: Home },
+    ...superAdminLinks,
   ];
+
+  const allLinks: NavLink[] = isSuperAdmin
+    ? superAdminAllLinks
+    : [
+        ...(user.role === "USER" ? personnelLinks : baseLinks),
+        ...(isTech ? techLinks : []),
+        ...(isManager ? managerLinks : []),
+        ...(user.role === "ADMIN" ? adminLinks : []),
+      ];
 
   return (
     <>
