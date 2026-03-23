@@ -138,6 +138,8 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
             </div>
           </header>
 
+          <p className="text-red-600 font-bold text-xl p-4">BONJOUR TEST RAILWAY</p>
+
           {/* Desktop search bar */}
           <div className="hidden lg:flex items-center justify-between px-8 py-4 border-b border-gray-200/60 bg-white/60 backdrop-blur">
             <GlobalSearch />
