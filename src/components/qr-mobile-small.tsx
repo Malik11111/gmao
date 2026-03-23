@@ -87,16 +87,11 @@ export function QrMobileSmall() {
       const tx = col * CELL + CELL / 2;
       const ty = row * CELL + CELL / 2;
 
-      // Position de départ éparpillée autour du canvas — vient de plus loin
-      const angle = Math.random() * Math.PI * 2;
-      const radius = CANVAS_PX * 1.2 + Math.random() * CANVAS_PX * 1.4;
-      const sx = CANVAS_PX / 2 + Math.cos(angle) * radius;
-      const sy = CANVAS_PX / 2 + Math.sin(angle) * radius;
+      // Position de départ aléatoire visible dans le canvas (comme le QR coloré)
+      const sx = Math.random() * CANVAS_PX;
+      const sy = Math.random() * CANVAS_PX;
 
-      const dist = Math.sqrt(
-        (tx - CANVAS_PX / 2) ** 2 + (ty - CANVAS_PX / 2) ** 2,
-      );
-      const delay = dist * 0.012 + Math.random() * 0.25;
+      const delay = Math.random() * 0.6;
 
       return { tx, ty, sx, sy, delay };
     });
