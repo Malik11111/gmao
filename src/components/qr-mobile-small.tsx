@@ -158,7 +158,7 @@ export function QrMobileSmall() {
         const y = p.sy + (p.ty - p.sy) * progress;
         const size = CELL * 0.62 * (0.5 + progress * 0.5);
 
-        ctx.globalAlpha = 0.2 + progress * 0.8;
+        ctx.globalAlpha = progress < 0.5 ? progress * 1.6 : 1.0;
         ctx.fillStyle = COLOR;
         const r = size * 0.18;
         ctx.beginPath();
