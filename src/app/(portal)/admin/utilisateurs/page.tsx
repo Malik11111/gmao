@@ -31,6 +31,7 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
           }
         : {}),
     },
+    include: { establishment: currentUser.role === "SUPER_ADMIN" ? { select: { name: true } } : false },
     orderBy: [{ role: "asc" }, { lastName: "asc" }],
   });
 
@@ -81,6 +82,9 @@ export default async function UsersPage({ searchParams }: UsersPageProps) {
                 {u.active ? "Actif" : "Inactif"}
               </span>
               {u.service ? <span className="text-xs text-gray-400">{u.service}</span> : null}
+              {"establishment" in u && u.establishment ? (
+                <span className="text-xs text-indigo-500 font-medium">{(u.establishment as { name: string }).name}</span>
+              ) : null}
             </div>
 
             <div className="flex items-center gap-2">

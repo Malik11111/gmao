@@ -2,6 +2,7 @@ import { Role } from "@prisma/client";
 import Link from "next/link";
 import { createUserAction } from "@/app/actions";
 import { PageHeader } from "@/components/page-header";
+import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/session";
 
 type NewUserPageProps = {
@@ -16,9 +17,13 @@ const roleOptions = [
 ];
 
 export default async function NewUserPage({ searchParams }: NewUserPageProps) {
-  await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
+  const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   const params = await searchParams;
   const error = typeof params.error === "string" ? params.error : undefined;
+
+  const establishments = currentUser.role === "SUPER_ADMIN"
+    ? await prisma.establishment.findMany({ orderBy: { name: "asc" } })
+    : [];
 
   return (
     <div className="space-y-6">
@@ -48,7 +53,7 @@ export default async function NewUserPage({ searchParams }: NewUserPageProps) {
           </div>
           <div className="space-y-1.5">
             <label className="label" htmlFor="password">Mot de passe</label>
-            <input className="field" id="password" name="password" type="password" placeholder="Minimum 6 caracteres" required />
+            <input className="field" id="password" name="password" type="password" placeholder="Minimum 8 caracteres" required />
           </div>
           <div className="space-y-1.5">
             <label className="label" htmlFor="role">Role</label>
@@ -58,6 +63,17 @@ export default async function NewUserPage({ searchParams }: NewUserPageProps) {
               ))}
             </select>
           </div>
+          {establishments.length > 0 ? (
+            <div className="space-y-1.5">
+              <label className="label" htmlFor="establishmentId">Etablissement</label>
+              <select className="field" id="establishmentId" name="establishmentId" required>
+                <option value="">-- Choisir un etablissement --</option>
+                {establishments.map((e) => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           <div className="space-y-1.5">
             <label className="label" htmlFor="service">Service</label>
             <input className="field" id="service" name="service" placeholder="Maintenance, Hebergement, Direction..." />

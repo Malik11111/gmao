@@ -86,7 +86,7 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
                 {user.role === "SUPER_ADMIN" ? (
                   <NavLink href="/admin/etablissements" icon={<Building2 className="h-4 w-4" />} label="Etablissements" />
                 ) : null}
-                <NavLink href="/admin/categories" icon={<FolderCog className="h-4 w-4" />} label="Categories" />
+                {!isSuperAdmin ? <NavLink href="/admin/categories" icon={<FolderCog className="h-4 w-4" />} label="Categories" /> : null}
                 <NavLink href="/admin/utilisateurs" icon={<Settings className="h-4 w-4" />} label="Utilisateurs" />
               </>
             ) : null}

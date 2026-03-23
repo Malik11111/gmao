@@ -19,12 +19,18 @@ const roleOptions = [
 ];
 
 export default async function EditUserPage({ params, searchParams }: EditUserPageProps) {
-  await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
+  const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
   const { id } = await params;
   const qp = await searchParams;
   const error = typeof qp.error === "string" ? qp.error : undefined;
 
-  const user = await prisma.user.findUnique({ where: { id } });
+  const [user, establishments] = await Promise.all([
+    prisma.user.findUnique({ where: { id } }),
+    currentUser.role === "SUPER_ADMIN"
+      ? prisma.establishment.findMany({ orderBy: { name: "asc" } })
+      : Promise.resolve([]),
+  ]);
+
   if (!user) notFound();
 
   return (
@@ -66,6 +72,17 @@ export default async function EditUserPage({ params, searchParams }: EditUserPag
               ))}
             </select>
           </div>
+          {establishments.length > 0 ? (
+            <div className="space-y-1.5">
+              <label className="label" htmlFor="establishmentId">Etablissement</label>
+              <select className="field" id="establishmentId" name="establishmentId" defaultValue={user.establishmentId ?? ""}>
+                <option value="">-- Aucun --</option>
+                {establishments.map((e) => (
+                  <option key={e.id} value={e.id}>{e.name}</option>
+                ))}
+              </select>
+            </div>
+          ) : null}
           <div className="space-y-1.5">
             <label className="label" htmlFor="service">Service</label>
             <input className="field" id="service" name="service" defaultValue={user.service ?? ""} />

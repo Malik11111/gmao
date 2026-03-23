@@ -54,7 +54,6 @@ const adminLinks: NavLink[] = [
 
 const superAdminLinks: NavLink[] = [
   { href: "/admin/etablissements", label: "Etablissements", icon: Building2 },
-  { href: "/admin/categories", label: "Categories", icon: FolderCog },
   { href: "/admin/utilisateurs", label: "Utilisateurs", icon: Settings },
 ];
 

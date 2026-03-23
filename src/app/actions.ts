@@ -683,6 +683,11 @@ export async function createUserAction(formData: FormData) {
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
 
+  // SUPER_ADMIN n'a pas d'établissement propre → il choisit celui du formulaire
+  const establishmentId = currentUser.role === "SUPER_ADMIN"
+    ? (getOptionalString(formData, "establishmentId") ?? null)
+    : currentUser.establishmentId;
+
   await prisma.user.create({
     data: {
       email: parsed.data.email.toLowerCase(),
@@ -692,7 +697,7 @@ export async function createUserAction(formData: FormData) {
       role: parsed.data.role as Role,
       service: getOptionalString(formData, "service"),
       phone: getOptionalString(formData, "phone"),
-      establishmentId: currentUser.establishmentId,
+      establishmentId,
     },
   });
 
@@ -702,7 +707,6 @@ export async function createUserAction(formData: FormData) {
 
 export async function updateUserAction(formData: FormData) {
   const currentUser = await requireRole([Role.SUPER_ADMIN, Role.ADMIN]);
-  void currentUser;
 
   const id = getString(formData, "id");
 
@@ -735,6 +739,7 @@ export async function updateUserAction(formData: FormData) {
       role: parsed.data.role as Role,
       service: getOptionalString(formData, "service"),
       phone: getOptionalString(formData, "phone"),
+      ...(currentUser.role === "SUPER_ADMIN" ? { establishmentId: getOptionalString(formData, "establishmentId") ?? null } : {}),
       ...(password && password.length >= 6 ? { passwordHash: await bcrypt.hash(password, 10) } : {}),
     },
   });
