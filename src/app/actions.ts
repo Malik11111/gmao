@@ -855,26 +855,42 @@ export async function generateMaintenanceAction() {
     });
     if (!fallbackUser) continue;
 
-    await prisma.request.create({
+    const req = await prisma.request.create({
       data: {
         number: requestNumber,
         equipmentId: plan.equipmentId,
         requesterId: fallbackUser.id,
+        assignedToId: technician?.id ?? null,
         locationId: plan.equipment.locationId,
         establishmentId: user.establishmentId,
         issueType: "OTHER",
         description: `[Maintenance preventive] ${plan.title}${plan.description ? ` - ${plan.description}` : ""}`,
         urgency: "NORMAL",
-        status: "NEW",
+        status: technician ? "ACKNOWLEDGED" : "NEW",
+        planningDate: plan.nextDueDate,
+        planningTimeSlot: "MATIN",
         history: {
           create: {
             fromStatus: null,
-            toStatus: "NEW",
+            toStatus: technician ? "ACKNOWLEDGED" : "NEW",
             comment: "Generation automatique depuis un plan de maintenance preventive.",
           },
         },
       },
     });
+
+    // Notifier le technicien assigné
+    if (technician) {
+      await prisma.notification.create({
+        data: {
+          userId: technician.id,
+          title: "Maintenance preventive assignee",
+          message: `${plan.title} — ${plan.equipment.name}`,
+          link: `/demandes/${req.id}`,
+          establishmentId: user.establishmentId,
+        },
+      });
+    }
 
     // Advance next due date
     const nextDate = new Date(plan.nextDueDate);
@@ -893,6 +909,8 @@ export async function generateMaintenanceAction() {
 
   revalidatePath("/maintenance");
   revalidatePath("/demandes");
+  revalidatePath("/planning");
+  revalidatePath("/maintenance/planning");
   redirect(withSearchParams("/maintenance", { success: `${generated} intervention(s) preventive(s) generee(s).` }));
 }
 

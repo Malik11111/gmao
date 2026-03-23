@@ -2,9 +2,9 @@ import { Role } from "@prisma/client";
 import { CalendarClock, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { PageHeader } from "@/components/page-header";
+import { StatusBadge } from "@/components/status-badge";
 import { prisma } from "@/lib/db";
 import { requireRole } from "@/lib/session";
-import { formatDate } from "@/lib/utils";
 
 type Props = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
@@ -15,13 +15,20 @@ const MONTH_NAMES = [
   "Juillet", "Aout", "Septembre", "Octobre", "Novembre", "Decembre",
 ];
 
-type PlannedIntervention = {
+const SHORT_MONTHS = ["Jan", "Fev", "Mar", "Avr", "Mai", "Jun", "Jul", "Aou", "Sep", "Oct", "Nov", "Dec"];
+
+type PlannedRow = {
   date: Date;
   planTitle: string;
+  planId: string;
   equipmentName: string;
   locationLabel: string;
   intervalDays: number;
-  planId: string;
+  // Linked request (if generated)
+  requestId?: string;
+  requestNumber?: string;
+  requestStatus?: string;
+  assignedTo?: string;
 };
 
 function computeInterventions(
@@ -34,53 +41,34 @@ function computeInterventions(
     equipment: { name: string; location: { building: string; floor: string | null; room: string | null } | null };
   }[],
   year: number,
-): Map<number, PlannedIntervention[]> {
-  const map = new Map<number, PlannedIntervention[]>();
-  for (let m = 0; m < 12; m++) map.set(m, []);
-
+): PlannedRow[] {
+  const rows: PlannedRow[] = [];
   const yearStart = new Date(year, 0, 1);
   const yearEnd = new Date(year, 11, 31, 23, 59, 59);
 
   for (const plan of plans) {
     if (!plan.active) continue;
-
     const loc = plan.equipment.location;
-    const locationLabel = loc
-      ? [loc.building, loc.floor, loc.room].filter(Boolean).join(" - ")
-      : "";
-
-    const next = new Date(plan.nextDueDate);
+    const locationLabel = loc ? [loc.building, loc.floor, loc.room].filter(Boolean).join(" - ") : "";
     const intervalMs = plan.intervalDays * 86400000;
 
-    // Start from nextDueDate and go forward only
-    let cursor = new Date(next);
-
-    // If nextDueDate is before the year, advance to the first occurrence in the year
-    while (cursor < yearStart) {
-      cursor = new Date(cursor.getTime() + intervalMs);
-    }
-
-    // Go forward through the year
+    let cursor = new Date(plan.nextDueDate);
+    while (cursor < yearStart) cursor = new Date(cursor.getTime() + intervalMs);
     while (cursor <= yearEnd) {
-      const month = cursor.getMonth();
-      map.get(month)!.push({
+      rows.push({
         date: new Date(cursor),
         planTitle: plan.title,
+        planId: plan.id,
         equipmentName: plan.equipment.name,
         locationLabel,
         intervalDays: plan.intervalDays,
-        planId: plan.id,
       });
       cursor = new Date(cursor.getTime() + intervalMs);
     }
   }
 
-  // Sort each month by date
-  for (const [, interventions] of map) {
-    interventions.sort((a, b) => a.date.getTime() - b.date.getTime());
-  }
-
-  return map;
+  rows.sort((a, b) => a.date.getTime() - b.date.getTime());
+  return rows;
 }
 
 export default async function PlanningPage({ searchParams }: Props) {
@@ -90,26 +78,60 @@ export default async function PlanningPage({ searchParams }: Props) {
   const currentYear = new Date().getFullYear();
   const rawYear = typeof params.year === "string" ? parseInt(params.year, 10) : NaN;
   const year = !isNaN(rawYear) && rawYear >= 2020 && rawYear <= 2040 ? rawYear : currentYear;
+  const monthFilter = typeof params.month === "string" ? parseInt(params.month, 10) : -1;
 
-  const plans = await prisma.maintenancePlan.findMany({
-    where: { active: true, ...(user.establishmentId ? { equipment: { establishmentId: user.establishmentId } } : {}) },
-    include: { equipment: { include: { location: true } } },
-    orderBy: { nextDueDate: "asc" },
-  });
+  const estFilter = user.establishmentId ? { equipment: { establishmentId: user.establishmentId } } : {};
 
-  const interventionsByMonth = computeInterventions(plans, year);
+  const [plans, generatedRequests] = await Promise.all([
+    prisma.maintenancePlan.findMany({
+      where: { active: true, ...estFilter },
+      include: { equipment: { include: { location: true } } },
+      orderBy: { nextDueDate: "asc" },
+    }),
+    // Requests linked to maintenance (have "[Maintenance preventive]" in description)
+    prisma.request.findMany({
+      where: {
+        description: { contains: "[Maintenance preventive]" },
+        createdAt: { gte: new Date(year, 0, 1), lte: new Date(year, 11, 31, 23, 59, 59) },
+        ...(user.establishmentId ? { establishmentId: user.establishmentId } : {}),
+      },
+      include: { assignedTo: { select: { firstName: true, lastName: true } } },
+    }),
+  ]);
+
+  let rows = computeInterventions(plans, year);
+
+  // Match generated requests to planned interventions
+  for (const row of rows) {
+    const match = generatedRequests.find((r) => {
+      const desc = r.description.toLowerCase();
+      const title = row.planTitle.toLowerCase();
+      if (!desc.includes(title)) return false;
+      // Match by month (requests can be generated a few days off)
+      const rMonth = new Date(r.createdAt).getMonth();
+      const pMonth = row.date.getMonth();
+      return Math.abs(rMonth - pMonth) <= 1 || (rMonth === 0 && pMonth === 11) || (rMonth === 11 && pMonth === 0);
+    });
+    if (match) {
+      row.requestId = match.id;
+      row.requestNumber = match.number;
+      row.requestStatus = match.status;
+      row.assignedTo = match.assignedTo ? `${match.assignedTo.firstName} ${match.assignedTo.lastName[0]}.` : undefined;
+    }
+  }
+
+  // Apply month filter
+  if (monthFilter >= 0 && monthFilter <= 11) {
+    rows = rows.filter((r) => r.date.getMonth() === monthFilter);
+  }
 
   const today = new Date();
-  const currentMonth = today.getFullYear() === year ? today.getMonth() : -1;
-
-  let totalInterventions = 0;
-  for (const [, list] of interventionsByMonth) totalInterventions += list.length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <PageHeader
         title="Planning annuel"
-        description="Vue d'ensemble des interventions preventives prevues sur l'annee."
+        description="Toutes les interventions preventives prevues, connectees au planning hebdomadaire."
         actions={
           <Link href="/maintenance" className="secondary-button">
             Retour aux plans
@@ -117,102 +139,105 @@ export default async function PlanningPage({ searchParams }: Props) {
         }
       />
 
-      {/* Year navigation */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Link
-            href={`/maintenance/planning?year=${year - 1}`}
-            className="rounded-lg border border-gray-200 p-2 hover:bg-gray-50 transition"
-          >
-            <ChevronLeft className="h-4 w-4 text-gray-600" />
+      {/* Year navigation + month filter */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <Link href={`/maintenance/planning?year=${year - 1}`} className="secondary-button p-1.5">
+            <ChevronLeft className="h-4 w-4" />
           </Link>
-          <h2 className="text-2xl font-bold text-gray-900">{year}</h2>
-          <Link
-            href={`/maintenance/planning?year=${year + 1}`}
-            className="rounded-lg border border-gray-200 p-2 hover:bg-gray-50 transition"
-          >
-            <ChevronRight className="h-4 w-4 text-gray-600" />
+          <h2 className="text-xl font-bold text-gray-900 min-w-[60px] text-center">{year}</h2>
+          <Link href={`/maintenance/planning?year=${year + 1}`} className="secondary-button p-1.5">
+            <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
-        <p className="text-sm text-gray-500">
-          {totalInterventions} intervention{totalInterventions !== 1 ? "s" : ""} prevue{totalInterventions !== 1 ? "s" : ""}
-        </p>
-      </div>
 
-      {/* Month grid */}
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        {MONTH_NAMES.map((monthName, monthIndex) => {
-          const interventions = interventionsByMonth.get(monthIndex) ?? [];
-          const isCurrentMonth = monthIndex === currentMonth;
-          const isPast = year < currentYear || (year === currentYear && monthIndex < currentMonth);
-
-          return (
-            <div
-              key={monthIndex}
-              className={`panel overflow-hidden ${isCurrentMonth ? "ring-2 ring-indigo-400" : ""} ${isPast ? "opacity-70" : ""}`}
+        <div className="flex flex-wrap items-center gap-1">
+          <Link
+            href={`/maintenance/planning?year=${year}`}
+            className={`rounded px-2 py-1 text-[11px] font-semibold transition ${monthFilter === -1 ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100"}`}
+          >
+            Tous
+          </Link>
+          {SHORT_MONTHS.map((m, i) => (
+            <Link
+              key={i}
+              href={`/maintenance/planning?year=${year}&month=${i}`}
+              className={`rounded px-2 py-1 text-[11px] font-semibold transition ${monthFilter === i ? "bg-indigo-600 text-white" : "text-gray-500 hover:bg-gray-100"}`}
             >
-              {/* Month header */}
-              <div className={`px-4 py-3 flex items-center justify-between ${isCurrentMonth ? "bg-indigo-50" : "bg-gray-50"}`}>
-                <h3 className={`text-sm font-bold ${isCurrentMonth ? "text-indigo-700" : "text-gray-700"}`}>
-                  {monthName}
-                </h3>
-                {interventions.length > 0 ? (
-                  <span className={`inline-flex h-6 min-w-[24px] items-center justify-center rounded-full px-2 text-xs font-bold text-white ${isCurrentMonth ? "bg-indigo-500" : "bg-gray-400"}`}>
-                    {interventions.length}
-                  </span>
-                ) : null}
-              </div>
+              {m}
+            </Link>
+          ))}
+        </div>
 
-              {/* Interventions list */}
-              <div className="px-4 py-3 space-y-2 min-h-[80px]">
-                {interventions.length === 0 ? (
-                  <p className="text-xs text-gray-400 text-center py-4">Aucune intervention</p>
-                ) : (
-                  interventions.map((intervention, idx) => {
-                    const interventionDate = new Date(intervention.date);
-                    const isPastDate = interventionDate < today;
-                    const day = interventionDate.getDate();
-                    const dayStr = day.toString().padStart(2, "0");
-
-                    return (
-                      <div
-                        key={`${intervention.planId}-${idx}`}
-                        className={`flex items-start gap-3 rounded-lg border p-2.5 text-sm ${isPastDate ? "border-gray-100 bg-gray-50/50" : "border-indigo-100 bg-indigo-50/30"}`}
-                      >
-                        <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold ${isPastDate ? "bg-gray-200 text-gray-500" : "bg-indigo-100 text-indigo-700"}`}>
-                          {dayStr}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className={`font-semibold truncate ${isPastDate ? "text-gray-500" : "text-gray-900"}`}>
-                            {intervention.planTitle}
-                          </p>
-                          <p className="text-xs text-gray-500 truncate">{intervention.equipmentName}</p>
-                          {intervention.locationLabel ? (
-                            <p className="text-xs text-gray-400 truncate">{intervention.locationLabel}</p>
-                          ) : null}
-                        </div>
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          );
-        })}
+        <p className="text-xs text-gray-400">{rows.length} intervention{rows.length !== 1 ? "s" : ""}</p>
       </div>
 
-      {plans.length === 0 ? (
-        <div className="panel p-10 text-center">
-          <CalendarClock className="mx-auto h-12 w-12 text-gray-300" />
-          <h2 className="mt-4 text-xl font-bold text-gray-900">Aucun plan actif</h2>
-          <p className="mt-2 text-sm text-gray-500">
-            Creez des plans de maintenance preventive pour voir les interventions sur le planning.
-          </p>
-          <Link href="/maintenance/new" className="primary-button mt-4 inline-flex">
-            Creer un plan
-          </Link>
-        </div>
-      ) : null}
+      {/* Table */}
+      <section className="panel overflow-hidden">
+        <table className="w-full">
+          <thead>
+            <tr className="border-b border-slate-200 bg-slate-50/80 text-left text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              <th className="px-3 py-2">Date</th>
+              <th className="px-3 py-2">Intervention</th>
+              <th className="px-3 py-2">Equipement</th>
+              <th className="px-3 py-2 hidden lg:table-cell">Localisation</th>
+              <th className="px-3 py-2">Frequence</th>
+              <th className="px-3 py-2">Technicien</th>
+              <th className="px-3 py-2">Statut</th>
+              <th className="px-3 py-2 w-16" />
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-slate-50 text-xs">
+            {rows.map((row, idx) => {
+              const isPast = row.date < today;
+              const isThisMonth = row.date.getMonth() === today.getMonth() && row.date.getFullYear() === today.getFullYear();
+              return (
+                <tr key={`${row.planId}-${idx}`} className={`group transition ${isThisMonth ? "bg-indigo-50/30" : ""} ${isPast && !row.requestStatus ? "opacity-50" : ""} hover:bg-indigo-50/20`}>
+                  <td className="px-3 py-1.5 whitespace-nowrap font-medium text-gray-700">
+                    {row.date.getDate().toString().padStart(2, "0")} {SHORT_MONTHS[row.date.getMonth()]}
+                  </td>
+                  <td className="px-3 py-1.5 font-semibold text-gray-900">{row.planTitle}</td>
+                  <td className="px-3 py-1.5 text-gray-600">{row.equipmentName}</td>
+                  <td className="px-3 py-1.5 text-gray-400 hidden lg:table-cell">{row.locationLabel || "—"}</td>
+                  <td className="px-3 py-1.5 text-gray-400">{row.intervalDays}j</td>
+                  <td className="px-3 py-1.5">
+                    {row.assignedTo ? (
+                      <span className="text-indigo-600 font-medium">{row.assignedTo}</span>
+                    ) : (
+                      <span className="text-gray-300">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-1.5">
+                    {row.requestStatus ? (
+                      <StatusBadge kind="request" value={row.requestStatus} />
+                    ) : isPast ? (
+                      <span className="rounded border border-red-200 bg-red-50 px-1.5 py-0.5 text-[10px] font-semibold text-red-600">Non genere</span>
+                    ) : (
+                      <span className="rounded border border-gray-200 bg-gray-50 px-1.5 py-0.5 text-[10px] font-semibold text-gray-400">Planifie</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-1.5">
+                    {row.requestId ? (
+                      <Link href={`/demandes/${row.requestId}`} className="rounded border border-gray-200 px-2 py-0.5 text-[10px] font-semibold text-gray-600 hover:bg-gray-50 transition">
+                        Voir
+                      </Link>
+                    ) : null}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {rows.length === 0 ? (
+          <div className="p-8 text-center">
+            <CalendarClock className="mx-auto h-10 w-10 text-gray-300" />
+            <p className="mt-3 text-sm text-gray-400">Aucune intervention prevue {monthFilter >= 0 ? `en ${MONTH_NAMES[monthFilter].toLowerCase()}` : `pour ${year}`}</p>
+            <Link href="/maintenance/new" className="primary-button mt-3 inline-flex text-xs">
+              Creer un plan
+            </Link>
+          </div>
+        ) : null}
+      </section>
     </div>
   );
 }
