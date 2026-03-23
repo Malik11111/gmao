@@ -2,6 +2,7 @@ import { ArrowRight, KeyRound, ScanLine, Shield, Wrench } from "lucide-react";
 import { redirect } from "next/navigation";
 import { loginAction } from "@/app/actions";
 import { QrParticles } from "@/components/qr-particles";
+import { QrMobileSmall } from "@/components/qr-mobile-small";
 import { getSessionUser } from "@/lib/session";
 
 type LoginPageProps = {
@@ -20,7 +21,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const email = typeof params.email === "string" ? params.email : "";
 
   return (
-    <div className="min-h-screen flex">
+    <div className="min-h-screen flex relative">
+      {/* Mobile QR code - visible uniquement sur téléphone */}
+      <div className="lg:hidden fixed top-3 right-3 z-20">
+        <QrMobileSmall />
+      </div>
+
       {/* Left panel - branding */}
       <div className="hidden lg:flex lg:w-[55%] relative bg-gradient-to-br from-indigo-950 via-indigo-900 to-violet-900 text-white flex-col justify-between p-12 overflow-hidden">
         {/* 3D QR code particle animation */}
