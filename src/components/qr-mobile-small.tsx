@@ -50,7 +50,7 @@ const CANVAS_PX = 140;
 const QR_SIZE = 21;
 
 // Même couleur que le bouton "Se connecter" (--accent)
-const COLOR = "#4f46e5";
+const COLOR = "#000000";
 
 const FORM_DURATION = 4.5;
 const HOLD_DURATION = 15.0;
