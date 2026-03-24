@@ -170,26 +170,30 @@ export function QrMobileSmall() {
 
         const scanWidth = 24;
 
-        // Ligne laser principale
+        // Ligne laser principale - blanc lumineux
         const laserGrad = ctx.createLinearGradient(0, scanY - scanWidth / 2, 0, scanY + scanWidth / 2);
-        laserGrad.addColorStop(0, "rgba(99, 102, 241, 0)");
-        laserGrad.addColorStop(0.3, "rgba(99, 102, 241, 0.06)");
-        laserGrad.addColorStop(0.5, "rgba(99, 102, 241, 0.18)");
-        laserGrad.addColorStop(0.7, "rgba(99, 102, 241, 0.06)");
-        laserGrad.addColorStop(1, "rgba(99, 102, 241, 0)");
+        laserGrad.addColorStop(0, "rgba(255, 255, 255, 0)");
+        laserGrad.addColorStop(0.3, "rgba(255, 255, 255, 0.12)");
+        laserGrad.addColorStop(0.5, "rgba(255, 255, 255, 0.35)");
+        laserGrad.addColorStop(0.7, "rgba(255, 255, 255, 0.12)");
+        laserGrad.addColorStop(1, "rgba(255, 255, 255, 0)");
 
         ctx.globalAlpha = 1;
         ctx.fillStyle = laserGrad;
         ctx.fillRect(0, scanY - scanWidth / 2, CANVAS_PX, scanWidth);
 
-        // Ligne fine centrale brillante
-        ctx.globalAlpha = 0.4;
-        ctx.strokeStyle = "rgba(99, 102, 241, 1)";
-        ctx.lineWidth = 1;
+        // Ligne fine centrale brillante blanche
+        ctx.globalAlpha = 0.7;
+        ctx.shadowColor = "rgba(255, 255, 255, 1)";
+        ctx.shadowBlur = 8;
+        ctx.strokeStyle = "rgba(255, 255, 255, 1)";
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.moveTo(0, scanY);
         ctx.lineTo(CANVAS_PX, scanY);
         ctx.stroke();
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = "transparent";
 
         // Illumination des particules proches du scan
         for (let i = 0; i < particles.length; i++) {
@@ -198,8 +202,8 @@ export function QrMobileSmall() {
           if (dist < scanWidth) {
             const intensity = 1 - dist / scanWidth;
             const glowSize = CELL * 0.62 * 1.15;
-            ctx.globalAlpha = intensity * 0.35;
-            ctx.fillStyle = "rgba(99, 102, 241, 1)";
+            ctx.globalAlpha = intensity * 0.4;
+            ctx.fillStyle = "rgba(255, 255, 255, 1)";
             ctx.beginPath();
             ctx.roundRect(
               p.tx - glowSize / 2,
