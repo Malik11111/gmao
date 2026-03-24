@@ -58,7 +58,7 @@ const SCATTER_HOLD = 2.5;
 const TOTAL_CYCLE = FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
 
 // Nombre de positions gardées en mémoire pour les traînées
-const TRAIL_LENGTH = 5;
+const TRAIL_LENGTH = 8;
 
 function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -86,8 +86,9 @@ export function QrMobileSmall() {
     const particles = cells.map(({ row, col }) => {
       const tx = col * CELL + CELL / 2;
       const ty = row * CELL + CELL / 2;
-      const sx = Math.random() * CANVAS_PX;
-      const sy = Math.random() * CANVAS_PX;
+      // Départ depuis le haut, position X légèrement aléatoire autour de la cible
+      const sx = tx + (Math.random() - 0.5) * CANVAS_PX * 0.5;
+      const sy = -10 - Math.random() * CANVAS_PX * 0.4;
       const delay = Math.random() * 0.6;
 
       // Historique des positions pour les traînées
@@ -96,7 +97,11 @@ export function QrMobileSmall() {
         trail.push({ x: sx, y: sy });
       }
 
-      return { tx, ty, sx, sy, delay, trail, row, col };
+      // Position de sortie : tombe vers le bas et disparaît
+      const exitX = tx + (Math.random() - 0.5) * CANVAS_PX * 0.3;
+      const exitY = CANVAS_PX + 10 + Math.random() * CANVAS_PX * 0.4;
+
+      return { tx, ty, sx, sy, exitX, exitY, delay, trail, row, col };
     });
 
     let startTime: number | null = null;
@@ -132,18 +137,36 @@ export function QrMobileSmall() {
       ctx.scale(scaleX, 1);
       ctx.translate(-CANVAS_PX / 2, -CANVAS_PX / 2);
 
-      // === EFFET 3 : Traînées de particules ===
-      // Dessiner les traînées AVANT les particules (en dessous)
+      // === EFFET 3 : Traînées lumineuses ===
       const isMoving = isForming || isScattering;
       if (isMoving) {
         for (let i = 0; i < particles.length; i++) {
           const p = particles[i];
           for (let t = 0; t < p.trail.length; t++) {
-            const trailAlpha = (1 - t / p.trail.length) * 0.25;
-            const trailSize = CELL * 0.62 * (0.3 + (1 - t / p.trail.length) * 0.3);
+            const fade = 1 - t / p.trail.length;
+            const trailAlpha = fade * 0.55;
+            const trailSize = CELL * 0.62 * (0.25 + fade * 0.4);
+            const r = trailSize * 0.18;
+
+            // Glow indigo lumineux
+            ctx.globalAlpha = trailAlpha * 0.5;
+            ctx.shadowColor = "rgba(99, 102, 241, 0.9)";
+            ctx.shadowBlur = 6 * fade;
+            ctx.fillStyle = "rgba(99, 102, 241, 0.8)";
+            ctx.beginPath();
+            ctx.roundRect(
+              p.trail[t].x - trailSize / 2,
+              p.trail[t].y - trailSize / 2,
+              trailSize,
+              trailSize,
+              r,
+            );
+            ctx.fill();
+
+            // Coeur de la traînée plus opaque
+            ctx.shadowBlur = 0;
             ctx.globalAlpha = trailAlpha;
             ctx.fillStyle = COLOR;
-            const r = trailSize * 0.18;
             ctx.beginPath();
             ctx.roundRect(
               p.trail[t].x - trailSize / 2,
@@ -155,6 +178,8 @@ export function QrMobileSmall() {
             ctx.fill();
           }
         }
+        ctx.shadowBlur = 0;
+        ctx.shadowColor = "transparent";
       }
 
       // === Dessiner les particules principales ===
@@ -179,8 +204,16 @@ export function QrMobileSmall() {
           progress = 0;
         }
 
-        const x = p.sx + (p.tx - p.sx) * progress;
-        const y = p.sy + (p.ty - p.sy) * progress;
+        let x: number, y: number;
+        if (isScattering || (!isForming && !isHolding && !isScattering)) {
+          // Scatter : tombe vers le bas
+          x = p.tx + (p.exitX - p.tx) * (1 - progress);
+          y = p.ty + (p.exitY - p.ty) * (1 - progress);
+        } else {
+          // Formation : vient du haut
+          x = p.sx + (p.tx - p.sx) * progress;
+          y = p.sy + (p.ty - p.sy) * progress;
+        }
 
         // === EFFET 4 : Ondulation wave pendant le hold ===
         let waveOffsetY = 0;
