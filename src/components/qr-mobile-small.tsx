@@ -49,7 +49,6 @@ function generateQrGrid(size: number): boolean[][] {
 const CANVAS_PX = 168;
 const QR_SIZE = 21;
 
-// Même couleur que le bouton "Se connecter" (--accent)
 const COLOR = "#000000";
 
 const FORM_DURATION = 6.0;
@@ -57,6 +56,9 @@ const HOLD_DURATION = 6.0;
 const SCATTER_DURATION = 3.0;
 const SCATTER_HOLD = 2.5;
 const TOTAL_CYCLE = FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
+
+// Nombre de positions gardées en mémoire pour les traînées
+const TRAIL_LENGTH = 5;
 
 function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -74,7 +76,6 @@ export function QrMobileSmall() {
     const grid = generateQrGrid(QR_SIZE);
     const CELL = CANVAS_PX / QR_SIZE;
 
-    // Collecte les cellules actives
     const cells: { row: number; col: number }[] = [];
     for (let row = 0; row < QR_SIZE; row++) {
       for (let col = 0; col < QR_SIZE; col++) {
@@ -82,18 +83,20 @@ export function QrMobileSmall() {
       }
     }
 
-    // Génère les données de chaque particule
     const particles = cells.map(({ row, col }) => {
       const tx = col * CELL + CELL / 2;
       const ty = row * CELL + CELL / 2;
-
-      // Position de départ aléatoire visible dans le canvas (comme le QR coloré)
       const sx = Math.random() * CANVAS_PX;
       const sy = Math.random() * CANVAS_PX;
-
       const delay = Math.random() * 0.6;
 
-      return { tx, ty, sx, sy, delay };
+      // Historique des positions pour les traînées
+      const trail: { x: number; y: number }[] = [];
+      for (let i = 0; i < TRAIL_LENGTH; i++) {
+        trail.push({ x: sx, y: sy });
+      }
+
+      return { tx, ty, sx, sy, delay, trail, row, col };
     });
 
     let startTime: number | null = null;
@@ -106,25 +109,17 @@ export function QrMobileSmall() {
 
       ctx.clearRect(0, 0, CANVAS_PX, CANVAS_PX);
 
-      // Calcul du progress global pour la rotation douce
-      let formProgress: number;
-      if (cycleTime < FORM_DURATION) {
-        formProgress = Math.min(1, cycleTime / FORM_DURATION);
-      } else if (cycleTime < FORM_DURATION + HOLD_DURATION) {
-        formProgress = 1;
-      } else {
-        formProgress = Math.max(
-          0,
-          1 - (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION,
-        );
-      }
+      // Phase detection
+      const isForming = cycleTime < FORM_DURATION;
+      const isHolding = cycleTime >= FORM_DURATION && cycleTime < FORM_DURATION + HOLD_DURATION;
+      const isScattering = cycleTime >= FORM_DURATION + HOLD_DURATION && cycleTime < FORM_DURATION + HOLD_DURATION + SCATTER_DURATION;
+      const holdTime = isHolding ? cycleTime - FORM_DURATION : 0;
 
-      // Légère rotation du QR quand formé (comme la version 3D)
-      // Droit pendant la formation, oscillation douce quand formé
+      // Rotation douce
       let rotY: number;
-      if (cycleTime < FORM_DURATION) {
+      if (isForming) {
         rotY = 0;
-      } else if (cycleTime < FORM_DURATION + HOLD_DURATION) {
+      } else if (isHolding) {
         rotY = Math.sin(time * 0.45) * 0.14;
       } else {
         const fadeOut = Math.max(0, 1 - (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION);
@@ -137,19 +132,45 @@ export function QrMobileSmall() {
       ctx.scale(scaleX, 1);
       ctx.translate(-CANVAS_PX / 2, -CANVAS_PX / 2);
 
+      // === EFFET 3 : Traînées de particules ===
+      // Dessiner les traînées AVANT les particules (en dessous)
+      const isMoving = isForming || isScattering;
+      if (isMoving) {
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          for (let t = 0; t < p.trail.length; t++) {
+            const trailAlpha = (1 - t / p.trail.length) * 0.25;
+            const trailSize = CELL * 0.62 * (0.3 + (1 - t / p.trail.length) * 0.3);
+            ctx.globalAlpha = trailAlpha;
+            ctx.fillStyle = COLOR;
+            const r = trailSize * 0.18;
+            ctx.beginPath();
+            ctx.roundRect(
+              p.trail[t].x - trailSize / 2,
+              p.trail[t].y - trailSize / 2,
+              trailSize,
+              trailSize,
+              r,
+            );
+            ctx.fill();
+          }
+        }
+      }
+
+      // === Dessiner les particules principales ===
       for (let i = 0; i < particles.length; i++) {
         const p = particles[i];
 
         let progress: number;
-        if (cycleTime < FORM_DURATION) {
+        if (isForming) {
           const t = Math.max(
             0,
             (cycleTime - p.delay) / (FORM_DURATION - p.delay - 0.2),
           );
           progress = easeInOutCubic(Math.min(1, Math.max(0, t)));
-        } else if (cycleTime < FORM_DURATION + HOLD_DURATION) {
+        } else if (isHolding) {
           progress = 1;
-        } else if (cycleTime < FORM_DURATION + HOLD_DURATION + SCATTER_DURATION) {
+        } else if (isScattering) {
           const t =
             (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION;
           const delayed = Math.max(0, t - p.delay * 0.08);
@@ -160,14 +181,88 @@ export function QrMobileSmall() {
 
         const x = p.sx + (p.tx - p.sx) * progress;
         const y = p.sy + (p.ty - p.sy) * progress;
+
+        // === EFFET 4 : Ondulation wave pendant le hold ===
+        let waveOffsetY = 0;
+        if (isHolding) {
+          const waveSpeed = 2.5;
+          const waveAmplitude = 2.0;
+          const waveLength = 0.35;
+          waveOffsetY = Math.sin(holdTime * waveSpeed - p.row * waveLength) * waveAmplitude;
+        }
+
+        const finalX = x;
+        const finalY = y + waveOffsetY;
         const size = CELL * 0.62 * (0.5 + progress * 0.5);
+
+        // Mettre à jour la traînée (décaler l'historique)
+        if (isMoving) {
+          p.trail.pop();
+          p.trail.unshift({ x: finalX, y: finalY });
+        }
 
         ctx.globalAlpha = progress < 0.5 ? progress * 1.6 : 1.0;
         ctx.fillStyle = COLOR;
         const r = size * 0.18;
         ctx.beginPath();
-        ctx.roundRect(x - size / 2, y - size / 2, size, size, r);
+        ctx.roundRect(finalX - size / 2, finalY - size / 2, size, size, r);
         ctx.fill();
+      }
+
+      // === EFFET 7 : Scan laser pendant le hold ===
+      if (isHolding) {
+        const scanSpeed = 1.8;
+        const scanCycle = holdTime * scanSpeed % 2;
+        // Aller-retour : 0→1 puis 1→0
+        const scanNorm = scanCycle <= 1 ? scanCycle : 2 - scanCycle;
+        const scanY = scanNorm * CANVAS_PX;
+
+        const scanWidth = 24;
+
+        // Ligne laser principale
+        const laserGrad = ctx.createLinearGradient(0, scanY - scanWidth / 2, 0, scanY + scanWidth / 2);
+        laserGrad.addColorStop(0, "rgba(99, 102, 241, 0)");
+        laserGrad.addColorStop(0.3, "rgba(99, 102, 241, 0.06)");
+        laserGrad.addColorStop(0.5, "rgba(99, 102, 241, 0.18)");
+        laserGrad.addColorStop(0.7, "rgba(99, 102, 241, 0.06)");
+        laserGrad.addColorStop(1, "rgba(99, 102, 241, 0)");
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = laserGrad;
+        ctx.fillRect(0, scanY - scanWidth / 2, CANVAS_PX, scanWidth);
+
+        // Ligne fine centrale brillante
+        ctx.globalAlpha = 0.4;
+        ctx.strokeStyle = "rgba(99, 102, 241, 1)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(0, scanY);
+        ctx.lineTo(CANVAS_PX, scanY);
+        ctx.stroke();
+
+        // Illumination des particules proches du scan
+        for (let i = 0; i < particles.length; i++) {
+          const p = particles[i];
+          const py = p.ty + (isHolding
+            ? Math.sin(holdTime * 2.5 - p.row * 0.35) * 2.0
+            : 0);
+          const dist = Math.abs(py - scanY);
+          if (dist < scanWidth) {
+            const intensity = 1 - dist / scanWidth;
+            const glowSize = CELL * 0.62 * 1.15;
+            ctx.globalAlpha = intensity * 0.35;
+            ctx.fillStyle = "rgba(99, 102, 241, 1)";
+            ctx.beginPath();
+            ctx.roundRect(
+              p.tx - glowSize / 2,
+              py - glowSize / 2,
+              glowSize,
+              glowSize,
+              glowSize * 0.18,
+            );
+            ctx.fill();
+          }
+        }
       }
 
       ctx.restore();
