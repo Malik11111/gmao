@@ -160,12 +160,13 @@ export function QrMobileSmall() {
         ctx.fill();
       }
 
-      // === EFFET 7 : Scan laser pendant le hold ===
-      if (isHolding) {
-        const scanSpeed = 1.8;
-        const scanCycle = holdTime * scanSpeed % 2;
-        // Aller-retour : 0→1 puis 1→0
-        const scanNorm = scanCycle <= 1 ? scanCycle : 2 - scanCycle;
+      // === EFFET 7 : Scan laser pendant le hold (1 descente + 1 montée puis disparaît) ===
+      const scanDuration = 2.0; // secondes pour une traversée
+      const totalScanTime = scanDuration * 2; // descente + montée
+      if (isHolding && holdTime < totalScanTime) {
+        const scanNorm = holdTime < scanDuration
+          ? holdTime / scanDuration           // descente : 0→1
+          : 2 - holdTime / scanDuration;      // montée : 1→0
         const scanY = scanNorm * CANVAS_PX;
 
         const scanWidth = 24;
