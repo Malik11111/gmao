@@ -63,7 +63,9 @@ export function AppShell({ user, unreadNotifications, children }: AppShellProps)
             {isTech ? (
               <>
                 <p className="px-3 pt-4 pb-1 text-[10px] font-semibold uppercase tracking-widest text-indigo-400">Technique</p>
-                <NavLink href="/planning/today" icon={<CalendarCheck className="h-4 w-4" />} label="Mon planning" />
+                {user.role === "TECHNICIAN" ? (
+                  <NavLink href="/planning/today" icon={<CalendarCheck className="h-4 w-4" />} label="Mon planning" />
+                ) : null}
                 <NavLink href="/demandes/kanban" icon={<ClipboardList className="h-4 w-4" />} label="Vue Kanban" />
                 <NavLink href="/statistiques" icon={<BarChart3 className="h-4 w-4" />} label="Statistiques" />
                 {(user.role === "ADMIN" || user.role === "MANAGER") ? (

@@ -33,8 +33,11 @@ const personnelLinks: NavLink[] = [
   { href: "/notifications", label: "Notifications", icon: Bell },
 ];
 
-const techLinks: NavLink[] = [
+const techOnlyLinks: NavLink[] = [
   { href: "/planning/today", label: "Mon planning", icon: CalendarCheck },
+];
+
+const techLinks: NavLink[] = [
   { href: "/demandes/kanban", label: "Vue Kanban", icon: ClipboardList },
   { href: "/statistiques", label: "Statistiques", icon: BarChart3 },
 ];
@@ -74,6 +77,7 @@ export function MobileMenu({ user }: MobileMenuProps) {
     ? superAdminAllLinks
     : [
         ...(user.role === "USER" ? personnelLinks : baseLinks),
+        ...(user.role === "TECHNICIAN" ? techOnlyLinks : []),
         ...(isTech ? techLinks : []),
         ...(isManager ? managerLinks : []),
         ...(user.role === "ADMIN" ? adminLinks : []),
