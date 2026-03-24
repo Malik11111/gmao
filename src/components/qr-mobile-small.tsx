@@ -57,8 +57,6 @@ const SCATTER_DURATION = 3.0;
 const SCATTER_HOLD = 2.5;
 const TOTAL_CYCLE = FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
 
-// Nombre de positions gardées en mémoire pour les traînées
-const TRAIL_LENGTH = 8;
 
 function easeInOutCubic(t: number) {
   return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -91,13 +89,7 @@ export function QrMobileSmall() {
       const sy = Math.random() * CANVAS_PX;
       const delay = Math.random() * 0.6;
 
-      // Historique des positions pour les traînées
-      const trail: { x: number; y: number }[] = [];
-      for (let i = 0; i < TRAIL_LENGTH; i++) {
-        trail.push({ x: sx, y: sy });
-      }
-
-      return { tx, ty, sx, sy, delay, trail, row, col };
+      return { tx, ty, sx, sy, delay, row, col };
     });
 
     let startTime: number | null = null;
@@ -132,51 +124,6 @@ export function QrMobileSmall() {
       ctx.translate(CANVAS_PX / 2, CANVAS_PX / 2);
       ctx.scale(scaleX, 1);
       ctx.translate(-CANVAS_PX / 2, -CANVAS_PX / 2);
-
-      // === EFFET 3 : Traînées lumineuses ===
-      const isMoving = isForming || isScattering;
-      if (isMoving) {
-        for (let i = 0; i < particles.length; i++) {
-          const p = particles[i];
-          for (let t = 0; t < p.trail.length; t++) {
-            const fade = 1 - t / p.trail.length;
-            const trailAlpha = fade * 0.55;
-            const trailSize = CELL * 0.62 * (0.25 + fade * 0.4);
-            const r = trailSize * 0.18;
-
-            // Glow indigo lumineux
-            ctx.globalAlpha = trailAlpha * 0.5;
-            ctx.shadowColor = "rgba(99, 102, 241, 0.9)";
-            ctx.shadowBlur = 6 * fade;
-            ctx.fillStyle = "rgba(99, 102, 241, 0.8)";
-            ctx.beginPath();
-            ctx.roundRect(
-              p.trail[t].x - trailSize / 2,
-              p.trail[t].y - trailSize / 2,
-              trailSize,
-              trailSize,
-              r,
-            );
-            ctx.fill();
-
-            // Coeur de la traînée plus opaque
-            ctx.shadowBlur = 0;
-            ctx.globalAlpha = trailAlpha;
-            ctx.fillStyle = COLOR;
-            ctx.beginPath();
-            ctx.roundRect(
-              p.trail[t].x - trailSize / 2,
-              p.trail[t].y - trailSize / 2,
-              trailSize,
-              trailSize,
-              r,
-            );
-            ctx.fill();
-          }
-        }
-        ctx.shadowBlur = 0;
-        ctx.shadowColor = "transparent";
-      }
 
       // === Dessiner les particules principales ===
       for (let i = 0; i < particles.length; i++) {
@@ -215,12 +162,6 @@ export function QrMobileSmall() {
         const finalX = x;
         const finalY = y + waveOffsetY;
         const size = CELL * 0.62 * (0.5 + progress * 0.5);
-
-        // Mettre à jour la traînée (décaler l'historique)
-        if (isMoving) {
-          p.trail.pop();
-          p.trail.unshift({ x: finalX, y: finalY });
-        }
 
         ctx.globalAlpha = progress < 0.5 ? progress * 1.6 : 1.0;
         ctx.fillStyle = COLOR;
