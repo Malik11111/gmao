@@ -86,9 +86,9 @@ export function QrMobileSmall() {
     const particles = cells.map(({ row, col }) => {
       const tx = col * CELL + CELL / 2;
       const ty = row * CELL + CELL / 2;
-      // Départ depuis le haut, position X légèrement aléatoire autour de la cible
-      const sx = tx + (Math.random() - 0.5) * CANVAS_PX * 0.5;
-      const sy = -10 - Math.random() * CANVAS_PX * 0.4;
+      // Position de départ aléatoire visible dans le canvas
+      const sx = Math.random() * CANVAS_PX;
+      const sy = Math.random() * CANVAS_PX;
       const delay = Math.random() * 0.6;
 
       // Historique des positions pour les traînées
@@ -97,11 +97,7 @@ export function QrMobileSmall() {
         trail.push({ x: sx, y: sy });
       }
 
-      // Position de sortie : tombe vers le bas et disparaît
-      const exitX = tx + (Math.random() - 0.5) * CANVAS_PX * 0.3;
-      const exitY = CANVAS_PX + 10 + Math.random() * CANVAS_PX * 0.4;
-
-      return { tx, ty, sx, sy, exitX, exitY, delay, trail, row, col };
+      return { tx, ty, sx, sy, delay, trail, row, col };
     });
 
     let startTime: number | null = null;
@@ -204,16 +200,8 @@ export function QrMobileSmall() {
           progress = 0;
         }
 
-        let x: number, y: number;
-        if (isScattering || (!isForming && !isHolding && !isScattering)) {
-          // Scatter : tombe vers le bas
-          x = p.tx + (p.exitX - p.tx) * (1 - progress);
-          y = p.ty + (p.exitY - p.ty) * (1 - progress);
-        } else {
-          // Formation : vient du haut
-          x = p.sx + (p.tx - p.sx) * progress;
-          y = p.sy + (p.ty - p.sy) * progress;
-        }
+        const x = p.sx + (p.tx - p.sx) * progress;
+        const y = p.sy + (p.ty - p.sy) * progress;
 
         // === EFFET 4 : Ondulation wave pendant le hold ===
         let waveOffsetY = 0;
