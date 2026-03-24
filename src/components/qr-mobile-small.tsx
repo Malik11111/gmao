@@ -150,24 +150,13 @@ export function QrMobileSmall() {
         const x = p.sx + (p.tx - p.sx) * progress;
         const y = p.sy + (p.ty - p.sy) * progress;
 
-        // === EFFET 4 : Ondulation wave pendant le hold ===
-        let waveOffsetY = 0;
-        if (isHolding) {
-          const waveSpeed = 2.5;
-          const waveAmplitude = 2.0;
-          const waveLength = 0.35;
-          waveOffsetY = Math.sin(holdTime * waveSpeed - p.row * waveLength) * waveAmplitude;
-        }
-
-        const finalX = x;
-        const finalY = y + waveOffsetY;
         const size = CELL * 0.62 * (0.5 + progress * 0.5);
 
         ctx.globalAlpha = progress < 0.5 ? progress * 1.6 : 1.0;
         ctx.fillStyle = COLOR;
         const r = size * 0.18;
         ctx.beginPath();
-        ctx.roundRect(finalX - size / 2, finalY - size / 2, size, size, r);
+        ctx.roundRect(x - size / 2, y - size / 2, size, size, r);
         ctx.fill();
       }
 
@@ -205,10 +194,7 @@ export function QrMobileSmall() {
         // Illumination des particules proches du scan
         for (let i = 0; i < particles.length; i++) {
           const p = particles[i];
-          const py = p.ty + (isHolding
-            ? Math.sin(holdTime * 2.5 - p.row * 0.35) * 2.0
-            : 0);
-          const dist = Math.abs(py - scanY);
+          const dist = Math.abs(p.ty - scanY);
           if (dist < scanWidth) {
             const intensity = 1 - dist / scanWidth;
             const glowSize = CELL * 0.62 * 1.15;
@@ -217,7 +203,7 @@ export function QrMobileSmall() {
             ctx.beginPath();
             ctx.roundRect(
               p.tx - glowSize / 2,
-              py - glowSize / 2,
+              p.ty - glowSize / 2,
               glowSize,
               glowSize,
               glowSize * 0.18,
