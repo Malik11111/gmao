@@ -168,7 +168,7 @@ export function QrParticles() {
 
     // Scan laser planes — enfants du mesh pour suivre sa rotation/position
     const qrHalfSize = (QR_SIZE * spacing) / 2; // ~2.835
-    const exactQrWidth = QR_SIZE * spacing;      // largeur exacte cubes
+    const exactQrWidth = QR_SIZE * spacing - 0.22; // légèrement réduit à droite
 
     const makeLine = (height: number, opacity: number) => {
       const geo = new THREE.PlaneGeometry(exactQrWidth, height);
@@ -234,7 +234,7 @@ export function QrParticles() {
       // position monde : centré sur le mesh, Y suit le scan, rotation = 0 (droit)
       for (const { plane } of [line1, line2, line3]) {
         plane.visible = scanVisible;
-        if (scanVisible) plane.position.set(mesh.position.x - 0.12, mesh.position.y + scanY, mesh.position.z + 0.3);
+        if (scanVisible) plane.position.set(mesh.position.x - 0.23, mesh.position.y + scanY, mesh.position.z + 0.3);
       }
 
       for (let i = 0; i < count; i++) {
