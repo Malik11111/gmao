@@ -181,7 +181,7 @@ export function QrParticles() {
       });
       const plane = new THREE.Mesh(geo, mat);
       plane.visible = false;
-      mesh.add(plane); // enfant du mesh → suit rotation + position automatiquement
+      scene.add(plane); // dans la scène, rotation toujours 0 (ligne droite)
       return { plane, mat, geo };
     };
 
@@ -231,10 +231,10 @@ export function QrParticles() {
         scanY = qrHalfSize - scanNorm * qrHalfSize * 2;
       }
 
-      // position locale (mesh est le parent) : x=0 centré, z légèrement devant
+      // position monde : centré sur le mesh, Y suit le scan, rotation = 0 (droit)
       for (const { plane } of [line1, line2, line3]) {
         plane.visible = scanVisible;
-        if (scanVisible) plane.position.set(0, scanY, 0.3);
+        if (scanVisible) plane.position.set(mesh.position.x, mesh.position.y + scanY, mesh.position.z + 0.3);
       }
 
       for (let i = 0; i < count; i++) {
