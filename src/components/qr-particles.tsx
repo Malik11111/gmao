@@ -306,8 +306,8 @@ export function QrParticles() {
                 (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION,
             );
 
-      mesh.rotation.y = Math.sin(time * 0.1) * 0.06 * formProgress;
-      mesh.rotation.x = Math.sin(time * 0.07) * 0.03 * formProgress;
+      mesh.rotation.y = 0;
+      mesh.rotation.x = 0;
 
       renderer.render(scene, camera);
     };
