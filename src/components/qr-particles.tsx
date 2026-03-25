@@ -166,6 +166,36 @@ export function QrParticles() {
     }
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
+    // Scan laser planes
+    const qrHalfSize = (QR_SIZE * spacing) / 2; // ~2.835
+    const qrWidth = QR_SIZE * spacing + 0.5;
+
+    // Soft glow plane (tall)
+    const glowGeo = new THREE.PlaneGeometry(qrWidth, 1.2);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const glowPlane = new THREE.Mesh(glowGeo, glowMat);
+    glowPlane.position.set(mesh.position.x, 0, mesh.position.z + 0.2);
+    scene.add(glowPlane);
+
+    // Sharp bright line
+    const lineGeo = new THREE.PlaneGeometry(qrWidth, 0.06);
+    const lineMat = new THREE.MeshBasicMaterial({
+      color: 0xffffff,
+      transparent: true,
+      opacity: 0.0,
+      depthWrite: false,
+      blending: THREE.AdditiveBlending,
+    });
+    const linePlane = new THREE.Mesh(lineGeo, lineMat);
+    linePlane.position.set(mesh.position.x, 0, mesh.position.z + 0.3);
+    scene.add(linePlane);
+
     // Animation state
     const FORM_DURATION = 4.5;
     const HOLD_DURATION = 15.0;
@@ -174,6 +204,9 @@ export function QrParticles() {
     const TOTAL_CYCLE =
       FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
 
+    const SCAN_DURATION = 2.5; // une traversée
+    const TOTAL_SCAN = SCAN_DURATION * 2;
+
     let time = 0;
     let animationId: number;
     const clock = new THREE.Clock();
@@ -181,12 +214,38 @@ export function QrParticles() {
     const easeInOutCubic = (t: number) =>
       t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
 
+    const scanColor = new THREE.Color(0xffffff);
+    const tempColor = new THREE.Color();
+
     const animate = () => {
       animationId = requestAnimationFrame(animate);
       const delta = clock.getDelta();
       time += delta;
 
       const cycleTime = time % TOTAL_CYCLE;
+      const isHolding = cycleTime >= FORM_DURATION && cycleTime < FORM_DURATION + HOLD_DURATION;
+      const holdTime = isHolding ? cycleTime - FORM_DURATION : 0;
+
+      // Scan laser position & opacity
+      let scanY = 0;
+      let scanVisible = false;
+      if (isHolding && holdTime < TOTAL_SCAN) {
+        scanVisible = true;
+        const scanNorm = holdTime < SCAN_DURATION
+          ? holdTime / SCAN_DURATION         // descente 0→1
+          : 2 - holdTime / SCAN_DURATION;    // montée 1→0
+        // map 0→1 to top→bottom: top = +qrHalfSize, bottom = -qrHalfSize
+        scanY = qrHalfSize - scanNorm * qrHalfSize * 2;
+      }
+
+      glowPlane.visible = scanVisible;
+      linePlane.visible = scanVisible;
+      if (scanVisible) {
+        glowPlane.position.y = scanY + mesh.position.y - (QR_SIZE * spacing) / 2 + qrHalfSize;
+        linePlane.position.y = glowPlane.position.y;
+        glowMat.opacity = 0.18;
+        lineMat.opacity = 0.85;
+      }
 
       for (let i = 0; i < count; i++) {
         const p = particles[i];
@@ -228,8 +287,25 @@ export function QrParticles() {
         dummy.scale.setScalar(0.7 + progress * 0.3);
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);
+
+        // Glow des particules proches du scan
+        if (scanVisible && progress > 0.8) {
+          const worldY = p.targetY + mesh.position.y - (QR_SIZE * spacing) / 2 + qrHalfSize;
+          const dist = Math.abs(worldY - glowPlane.position.y);
+          const scanRange = 0.5;
+          if (dist < scanRange) {
+            const intensity = 1 - dist / scanRange;
+            tempColor.lerpColors(gradientColors[i], scanColor, intensity * 0.7);
+            mesh.setColorAt(i, tempColor);
+          } else {
+            mesh.setColorAt(i, gradientColors[i]);
+          }
+        } else {
+          mesh.setColorAt(i, gradientColors[i]);
+        }
       }
       mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
       // Gentle rotation of the whole QR when formed
       const formProgress =
@@ -243,6 +319,10 @@ export function QrParticles() {
 
       mesh.rotation.y = Math.sin(time * 0.15) * 0.2 * formProgress;
       mesh.rotation.x = Math.sin(time * 0.1) * 0.1 * formProgress;
+
+      // Sync scan planes rotation with mesh
+      glowPlane.rotation.copy(mesh.rotation);
+      linePlane.rotation.copy(mesh.rotation);
 
       renderer.render(scene, camera);
     };
@@ -264,6 +344,10 @@ export function QrParticles() {
       renderer.dispose();
       cubeGeometry.dispose();
       cubeMaterial.dispose();
+      glowGeo.dispose();
+      glowMat.dispose();
+      lineGeo.dispose();
+      lineMat.dispose();
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
