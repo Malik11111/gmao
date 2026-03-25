@@ -171,8 +171,8 @@ export function QrParticles() {
     const qrWidth = QR_SIZE * spacing + 0.5;
 
     // 3 lignes fines superposées pour effet lumineux sans rectangle visible
-    // largeur exacte du QR (pas de dépassement)
-    const exactQrWidth = (QR_SIZE - 1) * spacing;
+    // largeur exacte du QR = de -offset à +offset
+    const exactQrWidth = QR_SIZE * spacing;
     const makeLine = (height: number, opacity: number) => {
       const geo = new THREE.PlaneGeometry(exactQrWidth, height);
       const mat = new THREE.MeshBasicMaterial({
@@ -200,7 +200,7 @@ export function QrParticles() {
     const TOTAL_CYCLE =
       FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
 
-    const SCAN_DURATION = 1.2; // une traversée (rapide)
+    const SCAN_DURATION = 2.5; // une traversée
     const TOTAL_SCAN = SCAN_DURATION * 2;
 
     let time = 0;
