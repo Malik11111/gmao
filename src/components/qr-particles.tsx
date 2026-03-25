@@ -234,7 +234,7 @@ export function QrParticles() {
       // position monde : centré sur le mesh, Y suit le scan, rotation = 0 (droit)
       for (const { plane } of [line1, line2, line3]) {
         plane.visible = scanVisible;
-        if (scanVisible) plane.position.set(mesh.position.x, mesh.position.y + scanY, mesh.position.z + 0.3);
+        if (scanVisible) plane.position.set(mesh.position.x - 0.6, mesh.position.y + scanY, mesh.position.z + 0.3);
       }
 
       for (let i = 0; i < count; i++) {
