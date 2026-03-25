@@ -166,13 +166,10 @@ export function QrParticles() {
     }
     if (mesh.instanceColor) mesh.instanceColor.needsUpdate = true;
 
-    // Scan laser planes
+    // Scan laser planes — enfants du mesh pour suivre sa rotation/position
     const qrHalfSize = (QR_SIZE * spacing) / 2; // ~2.835
-    const qrWidth = QR_SIZE * spacing + 0.5;
+    const exactQrWidth = QR_SIZE * spacing;      // largeur exacte cubes
 
-    // 3 lignes fines superposées pour effet lumineux sans rectangle visible
-    // largeur exacte du QR = de -offset à +offset
-    const exactQrWidth = QR_SIZE * spacing;
     const makeLine = (height: number, opacity: number) => {
       const geo = new THREE.PlaneGeometry(exactQrWidth, height);
       const mat = new THREE.MeshBasicMaterial({
@@ -184,13 +181,13 @@ export function QrParticles() {
       });
       const plane = new THREE.Mesh(geo, mat);
       plane.visible = false;
-      scene.add(plane);
+      mesh.add(plane); // enfant du mesh → suit rotation + position automatiquement
       return { plane, mat, geo };
     };
 
-    const line1 = makeLine(0.014, 1.0);  // ligne ultra fine centrale, max blanc
-    const line2 = makeLine(0.055, 0.65); // halo proche intense
-    const line3 = makeLine(0.16,  0.30); // halo large diffus
+    const line1 = makeLine(0.014, 1.0);  // ligne ultra fine centrale
+    const line2 = makeLine(0.055, 0.65); // halo proche
+    const line3 = makeLine(0.16,  0.30); // halo diffus
 
     // Animation state
     const FORM_DURATION = 4.5;
@@ -234,10 +231,10 @@ export function QrParticles() {
         scanY = qrHalfSize - scanNorm * qrHalfSize * 2;
       }
 
-      const scanWorldY = scanY + mesh.position.y - (QR_SIZE * spacing) / 2 + qrHalfSize;
+      // position locale (mesh est le parent) : x=0 centré, z légèrement devant
       for (const { plane } of [line1, line2, line3]) {
         plane.visible = scanVisible;
-        if (scanVisible) plane.position.set(mesh.position.x, scanWorldY, mesh.position.z + 0.3);
+        if (scanVisible) plane.position.set(0, scanY, 0.3);
       }
 
       for (let i = 0; i < count; i++) {
@@ -281,10 +278,9 @@ export function QrParticles() {
         dummy.updateMatrix();
         mesh.setMatrixAt(i, dummy.matrix);
 
-        // Glow des particules proches du scan
+        // Glow des particules proches du scan (coordonnées locales du mesh)
         if (scanVisible && progress > 0.8) {
-          const worldY = p.targetY + mesh.position.y - (QR_SIZE * spacing) / 2 + qrHalfSize;
-          const dist = Math.abs(worldY - scanWorldY);
+          const dist = Math.abs(p.targetY - scanY);
           const scanRange = 0.5;
           if (dist < scanRange) {
             const intensity = 1 - dist / scanRange;
@@ -312,11 +308,6 @@ export function QrParticles() {
 
       mesh.rotation.y = Math.sin(time * 0.1) * 0.06 * formProgress;
       mesh.rotation.x = Math.sin(time * 0.07) * 0.03 * formProgress;
-
-      // Sync scan planes rotation with mesh
-      for (const { plane } of [line1, line2, line3]) {
-        plane.rotation.copy(mesh.rotation);
-      }
 
       renderer.render(scene, camera);
     };
