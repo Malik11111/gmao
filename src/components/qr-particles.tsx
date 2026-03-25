@@ -171,8 +171,10 @@ export function QrParticles() {
     const qrWidth = QR_SIZE * spacing + 0.5;
 
     // 3 lignes fines superposées pour effet lumineux sans rectangle visible
+    // largeur exacte du QR (pas de dépassement)
+    const exactQrWidth = (QR_SIZE - 1) * spacing;
     const makeLine = (height: number, opacity: number) => {
-      const geo = new THREE.PlaneGeometry(qrWidth, height);
+      const geo = new THREE.PlaneGeometry(exactQrWidth, height);
       const mat = new THREE.MeshBasicMaterial({
         color: 0xffffff,
         transparent: true,
@@ -186,9 +188,9 @@ export function QrParticles() {
       return { plane, mat, geo };
     };
 
-    const line1 = makeLine(0.012, 0.95); // ligne ultra fine centrale
-    const line2 = makeLine(0.045, 0.45); // halo proche
-    const line3 = makeLine(0.13,  0.18); // halo large diffus
+    const line1 = makeLine(0.014, 1.0);  // ligne ultra fine centrale, max blanc
+    const line2 = makeLine(0.055, 0.65); // halo proche intense
+    const line3 = makeLine(0.16,  0.30); // halo large diffus
 
     // Animation state
     const FORM_DURATION = 4.5;
@@ -198,7 +200,7 @@ export function QrParticles() {
     const TOTAL_CYCLE =
       FORM_DURATION + HOLD_DURATION + SCATTER_DURATION + SCATTER_HOLD;
 
-    const SCAN_DURATION = 2.5; // une traversée
+    const SCAN_DURATION = 1.2; // une traversée (rapide)
     const TOTAL_SCAN = SCAN_DURATION * 2;
 
     let time = 0;
