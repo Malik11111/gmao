@@ -170,31 +170,25 @@ export function QrParticles() {
     const qrHalfSize = (QR_SIZE * spacing) / 2; // ~2.835
     const qrWidth = QR_SIZE * spacing + 0.5;
 
-    // Soft glow plane (tall)
-    const glowGeo = new THREE.PlaneGeometry(qrWidth, 1.2);
-    const glowMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.0,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const glowPlane = new THREE.Mesh(glowGeo, glowMat);
-    glowPlane.position.set(mesh.position.x, 0, mesh.position.z + 0.2);
-    scene.add(glowPlane);
+    // 3 lignes fines superposées pour effet lumineux sans rectangle visible
+    const makeLine = (height: number, opacity: number) => {
+      const geo = new THREE.PlaneGeometry(qrWidth, height);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity,
+        depthWrite: false,
+        blending: THREE.AdditiveBlending,
+      });
+      const plane = new THREE.Mesh(geo, mat);
+      plane.visible = false;
+      scene.add(plane);
+      return { plane, mat, geo };
+    };
 
-    // Sharp bright line
-    const lineGeo = new THREE.PlaneGeometry(qrWidth, 0.06);
-    const lineMat = new THREE.MeshBasicMaterial({
-      color: 0xffffff,
-      transparent: true,
-      opacity: 0.0,
-      depthWrite: false,
-      blending: THREE.AdditiveBlending,
-    });
-    const linePlane = new THREE.Mesh(lineGeo, lineMat);
-    linePlane.position.set(mesh.position.x, 0, mesh.position.z + 0.3);
-    scene.add(linePlane);
+    const line1 = makeLine(0.012, 0.95); // ligne ultra fine centrale
+    const line2 = makeLine(0.045, 0.45); // halo proche
+    const line3 = makeLine(0.13,  0.18); // halo large diffus
 
     // Animation state
     const FORM_DURATION = 4.5;
@@ -238,13 +232,10 @@ export function QrParticles() {
         scanY = qrHalfSize - scanNorm * qrHalfSize * 2;
       }
 
-      glowPlane.visible = scanVisible;
-      linePlane.visible = scanVisible;
-      if (scanVisible) {
-        glowPlane.position.y = scanY + mesh.position.y - (QR_SIZE * spacing) / 2 + qrHalfSize;
-        linePlane.position.y = glowPlane.position.y;
-        glowMat.opacity = 0.18;
-        lineMat.opacity = 0.85;
+      const scanWorldY = scanY + mesh.position.y - (QR_SIZE * spacing) / 2 + qrHalfSize;
+      for (const { plane } of [line1, line2, line3]) {
+        plane.visible = scanVisible;
+        if (scanVisible) plane.position.set(mesh.position.x, scanWorldY, mesh.position.z + 0.3);
       }
 
       for (let i = 0; i < count; i++) {
@@ -291,7 +282,7 @@ export function QrParticles() {
         // Glow des particules proches du scan
         if (scanVisible && progress > 0.8) {
           const worldY = p.targetY + mesh.position.y - (QR_SIZE * spacing) / 2 + qrHalfSize;
-          const dist = Math.abs(worldY - glowPlane.position.y);
+          const dist = Math.abs(worldY - scanWorldY);
           const scanRange = 0.5;
           if (dist < scanRange) {
             const intensity = 1 - dist / scanRange;
@@ -317,12 +308,13 @@ export function QrParticles() {
                 (cycleTime - FORM_DURATION - HOLD_DURATION) / SCATTER_DURATION,
             );
 
-      mesh.rotation.y = Math.sin(time * 0.15) * 0.2 * formProgress;
-      mesh.rotation.x = Math.sin(time * 0.1) * 0.1 * formProgress;
+      mesh.rotation.y = Math.sin(time * 0.1) * 0.06 * formProgress;
+      mesh.rotation.x = Math.sin(time * 0.07) * 0.03 * formProgress;
 
       // Sync scan planes rotation with mesh
-      glowPlane.rotation.copy(mesh.rotation);
-      linePlane.rotation.copy(mesh.rotation);
+      for (const { plane } of [line1, line2, line3]) {
+        plane.rotation.copy(mesh.rotation);
+      }
 
       renderer.render(scene, camera);
     };
@@ -344,10 +336,10 @@ export function QrParticles() {
       renderer.dispose();
       cubeGeometry.dispose();
       cubeMaterial.dispose();
-      glowGeo.dispose();
-      glowMat.dispose();
-      lineGeo.dispose();
-      lineMat.dispose();
+      for (const { geo, mat } of [line1, line2, line3]) {
+        geo.dispose();
+        mat.dispose();
+      }
       if (container.contains(renderer.domElement)) {
         container.removeChild(renderer.domElement);
       }
