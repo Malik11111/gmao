@@ -46,7 +46,7 @@ export default async function StatistiquesPage() {
     prisma.equipment.count({ where: { ...estFilter } }),
     prisma.request.count({ where: { ...estFilter } }),
     prisma.request.findMany({
-      where: { equipmentId: null, createdAt: { gte: sevenDaysAgo }, ...estFilter },
+      where: { createdAt: { gte: sevenDaysAgo }, ...estFilter },
       select: { createdAt: true, urgency: true },
     }),
   ]);
@@ -160,7 +160,7 @@ export default async function StatistiquesPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-1">
             <div>
               <h2 className="text-base font-bold text-gray-900">Anomalies hebdomadaires</h2>
-              <p className="text-xs text-gray-400 mt-0.5 mb-4">Signalements sans equipement - 7 derniers jours</p>
+              <p className="text-xs text-gray-400 mt-0.5 mb-4">Toutes les demandes - 7 derniers jours</p>
             </div>
             <div className="flex flex-wrap items-center gap-2 lg:gap-4 text-xs text-gray-500 mb-4">
               <span className="flex items-center gap-1.5"><span className="inline-block w-3 h-3 rounded-full bg-indigo-500" />Normale</span>

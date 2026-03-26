@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { getSessionUser } from "@/lib/session";
 
@@ -18,6 +19,8 @@ export async function POST(request: Request) {
     where: { id, recipientId: user.id },
     data: { read: true },
   });
+
+  revalidatePath("/", "layout");
 
   return Response.json({ ok: true });
 }

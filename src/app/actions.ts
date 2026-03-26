@@ -444,6 +444,7 @@ export async function markAllReadAction() {
     data: { read: true },
   });
 
+  revalidatePath("/", "layout");
   revalidatePath("/notifications");
   redirect("/notifications");
 }

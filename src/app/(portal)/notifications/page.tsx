@@ -1,3 +1,4 @@
+import { revalidatePath } from "next/cache";
 import { Bell, CheckCheck } from "lucide-react";
 import { NotificationLink } from "@/components/notification-link";
 import { PageHeader } from "@/components/page-header";
@@ -32,6 +33,7 @@ export default async function NotificationsPage() {
       .map((n) => n.id);
     if (orphanedIds.length > 0) {
       await prisma.notification.deleteMany({ where: { id: { in: orphanedIds } } });
+      revalidatePath("/", "layout");
     }
   }
 
