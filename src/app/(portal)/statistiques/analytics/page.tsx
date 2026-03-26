@@ -36,14 +36,13 @@ export default async function AnalyticsPage() {
   const now = new Date();
 
   /* ── Fetch data ── */
-  const [allRequests, allEquipments, doneRequests] = await Promise.all([
+  const [allRequests, allEquipments, doneHistories] = await Promise.all([
     prisma.request.findMany({
       where: { ...estFilter },
       select: {
         id: true,
         equipmentId: true,
         createdAt: true,
-        updatedAt: true,
         status: true,
         urgency: true,
         equipment: { select: { id: true, name: true } },
@@ -51,23 +50,26 @@ export default async function AnalyticsPage() {
       orderBy: { createdAt: "asc" },
     }),
     prisma.equipment.count({ where: { ...estFilter } }),
-    prisma.request.findMany({
-      where: { status: { in: ["DONE", "CLOSED"] }, ...estFilter },
-      select: { createdAt: true, updatedAt: true, equipmentId: true, equipment: { select: { name: true } } },
+    prisma.statusHistory.findMany({
+      where: {
+        toStatus: "DONE",
+        ...(user.establishmentId ? { request: { establishmentId: user.establishmentId } } : {}),
+      },
+      select: {
+        createdAt: true,
+        request: { select: { createdAt: true, equipmentId: true, equipment: { select: { id: true, name: true } } } },
+      },
     }),
   ]);
 
-  /* ── KPI: MTTR (Mean Time To Repair) ── */
+  /* ── KPI: MTTR (Mean Time To Repair) — basé sur StatusHistory ── */
   let mttr = 0;
-  const resolvedWithTime = doneRequests.filter(
-    (r) => r.updatedAt.getTime() > r.createdAt.getTime(),
-  );
-  if (resolvedWithTime.length > 0) {
-    const totalMs = resolvedWithTime.reduce(
-      (sum, r) => sum + (r.updatedAt.getTime() - r.createdAt.getTime()),
+  if (doneHistories.length > 0) {
+    const totalMs = doneHistories.reduce(
+      (sum, h) => sum + (h.createdAt.getTime() - h.request.createdAt.getTime()),
       0,
     );
-    mttr = Math.round((totalMs / resolvedWithTime.length / (1000 * 60 * 60 * 24)) * 10) / 10;
+    mttr = Math.round((totalMs / doneHistories.length / (1000 * 60 * 60 * 24)) * 10) / 10;
   }
 
   /* ── KPI: Taux de resolution ── */
@@ -115,12 +117,12 @@ export default async function AnalyticsPage() {
     if (r.urgency === "CRITICAL" || r.urgency === "URGENT") eq.critical++;
   }
 
-  // Add resolution times
-  for (const r of doneRequests) {
-    if (!r.equipment) continue;
-    const eq = eqMap.get(r.equipmentId ?? "");
+  // Add resolution times (basé sur StatusHistory → date réelle de résolution)
+  for (const h of doneHistories) {
+    if (!h.request.equipment) continue;
+    const eq = eqMap.get(h.request.equipment.id);
     if (!eq) continue;
-    const days = (r.updatedAt.getTime() - r.createdAt.getTime()) / (1000 * 60 * 60 * 24);
+    const days = (h.createdAt.getTime() - h.request.createdAt.getTime()) / (1000 * 60 * 60 * 24);
     if (days > 0) {
       eq.avgResolution = (eq.avgResolution * eq.resCount + days) / (eq.resCount + 1);
       eq.resCount++;
