@@ -217,12 +217,44 @@ async function main() {
     r.number = `DI-${r.createdAt.getFullYear()}-${String(num).padStart(3, "0")}`;
   }
 
-  // Insert in batches
+  // Status flow for history generation
+  const statusFlow: Record<string, RequestStatus[]> = {
+    NEW: ["NEW"],
+    ACKNOWLEDGED: ["NEW", "ACKNOWLEDGED"],
+    IN_PROGRESS: ["NEW", "ACKNOWLEDGED", "IN_PROGRESS"],
+    WAITING: ["NEW", "ACKNOWLEDGED", "IN_PROGRESS", "WAITING"],
+    DONE: ["NEW", "ACKNOWLEDGED", "IN_PROGRESS", "DONE"],
+    CLOSED: ["NEW", "ACKNOWLEDGED", "IN_PROGRESS", "DONE", "CLOSED"],
+    REJECTED: ["NEW", "REJECTED"],
+    ARCHIVED: ["NEW", "ACKNOWLEDGED", "IN_PROGRESS", "DONE", "ARCHIVED"],
+  };
+
+  // Insert requests + StatusHistory
   let inserted = 0;
   for (const r of requests) {
     try {
-      await prisma.request.create({ data: r });
+      const request = await prisma.request.create({ data: r });
       inserted++;
+
+      // Generate StatusHistory entries
+      const flow = statusFlow[r.status] || ["NEW"];
+      const totalDuration = r.updatedAt.getTime() - r.createdAt.getTime();
+
+      for (let j = 0; j < flow.length; j++) {
+        // Spread transitions evenly across the duration
+        const fraction = flow.length > 1 ? j / (flow.length - 1) : 0;
+        const transitionDate = new Date(r.createdAt.getTime() + totalDuration * fraction);
+
+        await prisma.statusHistory.create({
+          data: {
+            requestId: request.id,
+            fromStatus: j === 0 ? null : flow[j - 1],
+            toStatus: flow[j],
+            actorId: r.requesterId,
+            createdAt: transitionDate,
+          },
+        });
+      }
     } catch (e: any) {
       if (e.code === "P2002") continue; // duplicate
       throw e;
