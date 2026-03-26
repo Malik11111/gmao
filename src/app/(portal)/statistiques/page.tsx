@@ -109,7 +109,8 @@ export default async function StatistiquesPage() {
   }
   const weeklyData = Array.from(weeklyMap.entries()).map(([key, val]) => ({
     day: dayNames[new Date(key).getDay()],
-    ...val,
+    normal: val.total - val.urgent,
+    urgent: val.urgent,
   }));
 
   // Average resolution (requests that reached DONE)

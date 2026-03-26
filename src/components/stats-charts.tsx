@@ -75,9 +75,9 @@ export function WeeklyAnomalyChart({ data }: { data: WeeklyAnomalyData }) {
           <YAxis tick={{ fontSize: 11, fill: "#9ca3af" }} axisLine={false} tickLine={false} allowDecimals={false} />
           <Tooltip
             contentStyle={{ borderRadius: "12px", border: "1px solid #e5e7eb", fontSize: "13px" }}
-            formatter={(value: number, name: string) => [value, name === "total" ? "Total" : "Urgente"]}
+            formatter={(value: number, name: string) => [value, name === "normal" ? "Normale" : "Urgente"]}
           />
-          <Area type="monotone" dataKey="total" name="Normale" stroke="#6366f1" strokeWidth={2} fill="url(#colorTotal)" dot={{ r: 4, fill: "#6366f1" }} activeDot={{ r: 6 }} />
+          <Area type="monotone" dataKey="normal" name="Normale" stroke="#6366f1" strokeWidth={2} fill="url(#colorTotal)" dot={{ r: 4, fill: "#6366f1" }} activeDot={{ r: 6 }} />
           <Area type="monotone" dataKey="urgent" name="Urgente" stroke="#ef4444" strokeWidth={2} fill="url(#colorUrgent)" dot={{ r: 4, fill: "#ef4444" }} activeDot={{ r: 6 }} />
         </AreaChart>
       </ResponsiveContainer>
